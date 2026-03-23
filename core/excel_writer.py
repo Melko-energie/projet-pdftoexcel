@@ -36,6 +36,10 @@ THIN_BORDER = Border(
 EURO_FORMAT = '#,##0.00 €'
 DATE_FORMAT = 'DD/MM/YYYY'
 
+META_KEY_FILL = PatternFill(start_color="D6E4F0", end_color="D6E4F0", fill_type="solid")
+META_KEY_FONT = Font(name="Calibri", size=11, bold=True)
+META_VAL_FONT = Font(name="Calibri", size=11)
+
 
 def _sanitize_sheet_name(name: str) -> str:
     """Nettoie un nom de feuille Excel (max 31 caractères, pas de caractères interdits)."""
@@ -127,17 +131,57 @@ def write_dataset_to_sheet(ws, dataset: Dataset) -> None:
         ws.auto_filter.ref = f"A1:{last_col}{current_row - 1}"
 
 
-def write_excel(datasets: list[Dataset], output_path: Path) -> Path:
+def write_metadata_sheet(ws, metadata_rows: list[tuple[str, str]]) -> None:
+    """Écrit une feuille de métadonnées clé/valeur.
+
+    Args:
+        ws: Feuille openpyxl.
+        metadata_rows: Liste de tuples (clé, valeur).
+    """
+    # Headers
+    for col_idx, header in enumerate(["Champ", "Valeur"], start=1):
+        cell = ws.cell(row=1, column=col_idx, value=header)
+        cell.fill = HEADER_FILL
+        cell.font = HEADER_FONT
+        cell.alignment = HEADER_ALIGNMENT
+        cell.border = THIN_BORDER
+
+    # Données
+    for row_idx, (key, value) in enumerate(metadata_rows, start=2):
+        key_cell = ws.cell(row=row_idx, column=1, value=key)
+        key_cell.fill = META_KEY_FILL
+        key_cell.font = META_KEY_FONT
+        key_cell.alignment = CELL_ALIGNMENT
+        key_cell.border = THIN_BORDER
+
+        val_cell = ws.cell(row=row_idx, column=2, value=value or "")
+        val_cell.font = META_VAL_FONT
+        val_cell.alignment = CELL_ALIGNMENT
+        val_cell.border = THIN_BORDER
+
+    # Largeurs
+    ws.column_dimensions["A"].width = 35
+    ws.column_dimensions["B"].width = 80
+
+    ws.freeze_panes = "A2"
+
+
+def write_excel(
+    datasets: list[Dataset],
+    output_path: Path,
+    metadata_rows: list[tuple[str, str]] | None = None,
+) -> Path:
     """Crée un fichier Excel à partir des Datasets.
 
     Args:
         datasets: Liste de Datasets à écrire.
         output_path: Chemin du fichier de sortie.
+        metadata_rows: Métadonnées clé/valeur optionnelles (feuille 1).
 
     Returns:
         Le chemin du fichier créé.
     """
-    if not datasets:
+    if not datasets and not metadata_rows:
         logger.warning("Aucun dataset à écrire.")
         return output_path
 
@@ -147,6 +191,12 @@ def write_excel(datasets: list[Dataset], output_path: Path) -> Path:
     wb = Workbook()
     # Supprimer la feuille par défaut
     wb.remove(wb.active)
+
+    # Feuille métadonnées en premier si fournie
+    if metadata_rows:
+        ws_meta = wb.create_sheet(title="Métadonnées")
+        write_metadata_sheet(ws_meta, metadata_rows)
+        logger.info("Écriture de la feuille 'Métadonnées' : %d champs", len(metadata_rows))
 
     for dataset in datasets:
         sheet_name = _sanitize_sheet_name(dataset.name)
