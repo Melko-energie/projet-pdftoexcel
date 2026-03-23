@@ -72,6 +72,22 @@ class RawMetadata:
     commune: str = ""
     nom_destinataire: str = ""
 
+    # Interlocuteur
+    interlocuteur_nom: str = ""
+    interlocuteur_prenom: str = ""
+    interlocuteur_tel: str = ""
+
+    # Champs conditionnels (extraits si sous-categorie existe)
+    montant_ht_raw: str = ""
+    entreprise_travaux: str = ""
+    taux_tva_raw: str = ""
+    nature_travaux_raw: str = ""
+    montant_ttc_raw: str = ""
+    montant_subvention_raw: str = ""
+
+    # Texte complet du courrier (pour classification)
+    full_text: str = ""
+
     # Depuis la preuve de depot
     numero_lr_depot: str = ""
     date_depot: str = ""
@@ -83,6 +99,40 @@ class RawMetadata:
     receptionnaire_ar: str = ""
 
 
+def extract_interlocuteur(text: str) -> tuple[str, str]:
+    """Extrait nom et prenom de l'interlocuteur (destinataire du courrier).
+
+    Returns:
+        (nom, prenom) — nom en MAJUSCULES, prenom avec initiale majuscule.
+    """
+    match = P.PATTERN_INTERLOCUTEUR.search(text)
+    if match:
+        prenom = match.group(1) or ""
+        nom = match.group(2) or ""
+        return nom.strip(), prenom.strip()
+    return "", ""
+
+
+def extract_tel_interlocuteur(text: str) -> str:
+    """Extrait le telephone de l'interlocuteur depuis le texte complet du PDF."""
+    match = P.PATTERN_TEL.search(text)
+    if match:
+        return match.group(1).strip()
+    return ""
+
+
+def extract_conditional_fields(text: str) -> dict:
+    """Extrait les 6 champs conditionnels depuis le texte du courrier."""
+    return {
+        "montant_ht_raw": _search(P.PATTERN_MONTANT_HT, text),
+        "entreprise_travaux": _search(P.PATTERN_ENTREPRISE_TRAVAUX, text),
+        "taux_tva_raw": _search(P.PATTERN_TAUX_TVA, text),
+        "nature_travaux_raw": _search(P.PATTERN_NATURE_TRAVAUX, text),
+        "montant_ttc_raw": _search(P.PATTERN_MONTANT_TTC, text),
+        "montant_subvention_raw": _search(P.PATTERN_MONTANT_SUBVENTION, text),
+    }
+
+
 def extract_raw_from_courrier(pdf_bytes: bytes) -> dict:
     """Extrait toutes les donnees brutes du courrier PDF."""
     text = _extract_all_text(pdf_bytes)
@@ -90,20 +140,31 @@ def extract_raw_from_courrier(pdf_bytes: bytes) -> dict:
         return {}
 
     result = {}
+    result["full_text"] = text
 
     result["numero_demande"] = _search(P.PATTERN_NUM_DEMANDE, text)
 
-    # Annee fiscale : filtrer 2020-2030
-    annee = _search(P.PATTERN_ANNEE_FISCALE, text)
-    if annee:
-        try:
-            y = int(annee)
-            if 2020 <= y <= 2030:
-                result["annee_fiscale"] = annee
-        except ValueError:
-            pass
-    if "annee_fiscale" not in result:
-        result["annee_fiscale"] = ""
+    # Annee fiscale : chaine de priorite
+    annee = ""
+    for pattern in [
+        P.PATTERN_ANNEE_TFPB,
+        P.PATTERN_ANNEE_TITRE,
+        P.PATTERN_ANNEE_TITRE_TFPB,
+    ]:
+        annee = _search(pattern, text)
+        if annee:
+            break
+    # Fallback : premier 20XX entre 2020 et 2030
+    if not annee:
+        for match in P.PATTERN_ANNEE_FALLBACK.finditer(text):
+            try:
+                y = int(match.group(1))
+                if 2020 <= y <= 2030:
+                    annee = match.group(1)
+                    break
+            except ValueError:
+                continue
+    result["annee_fiscale"] = annee
 
     result["objet_complet"] = _search(P.PATTERN_OBJET, text)
     result["adresses"] = _search(P.PATTERN_ADRESSES, text)
@@ -141,6 +202,16 @@ def extract_raw_from_courrier(pdf_bytes: bytes) -> dict:
         result["commune"] = ""
 
     result["nom_destinataire"] = _search(P.PATTERN_DESTINATAIRE, text)
+
+    # Interlocuteur (destinataire du courrier)
+    nom_inter, prenom_inter = extract_interlocuteur(text)
+    result["interlocuteur_nom"] = nom_inter
+    result["interlocuteur_prenom"] = prenom_inter
+    result["interlocuteur_tel"] = extract_tel_interlocuteur(text)
+
+    # Champs conditionnels (seront utilises si sous-categorie non vide)
+    cond = extract_conditional_fields(text)
+    result.update(cond)
 
     return result
 
@@ -186,6 +257,7 @@ def build_raw_metadata(
 
     if courrier_bytes:
         data = extract_raw_from_courrier(courrier_bytes)
+        raw.full_text = data.get("full_text", "")
         raw.numero_demande = data.get("numero_demande", "")
         raw.annee_fiscale = data.get("annee_fiscale", "")
         raw.objet_complet = data.get("objet_complet", "")
@@ -205,6 +277,19 @@ def build_raw_metadata(
         raw.code_postal = data.get("code_postal", "")
         raw.commune = data.get("commune", "")
         raw.nom_destinataire = data.get("nom_destinataire", "")
+
+        # Interlocuteur
+        raw.interlocuteur_nom = data.get("interlocuteur_nom", "")
+        raw.interlocuteur_prenom = data.get("interlocuteur_prenom", "")
+        raw.interlocuteur_tel = data.get("interlocuteur_tel", "")
+
+        # Champs conditionnels
+        raw.montant_ht_raw = data.get("montant_ht_raw", "")
+        raw.entreprise_travaux = data.get("entreprise_travaux", "")
+        raw.taux_tva_raw = data.get("taux_tva_raw", "")
+        raw.nature_travaux_raw = data.get("nature_travaux_raw", "")
+        raw.montant_ttc_raw = data.get("montant_ttc_raw", "")
+        raw.montant_subvention_raw = data.get("montant_subvention_raw", "")
 
     # Fallback N demande depuis le nom de fichier
     if not raw.numero_demande and courrier_filename:

@@ -30,6 +30,7 @@ from .metadata import (
     extract_metadata,
     metadata_to_rows,
 )
+from scripts.table_data_extractor import extract_from_datasets as extract_table_data
 from .parser import Dataset, process_tables
 from .scanner import scan_pdf
 
@@ -256,12 +257,21 @@ def process_demande(
         finally:
             Path(tmp.name).unlink(missing_ok=True)
 
+    # --- Extraction des donnees des colonnes du tableau ---
+    table_data = None
+    if result.datasets:
+        try:
+            table_data = extract_table_data(result.datasets)
+        except Exception as e:
+            logger.error("Erreur extraction colonnes prefix %s: %s", dossier.prefix, e)
+
     # --- Etape 2 : Transformation en données métier ---
     try:
         computed = compute_metadata(
             raw,
             datasets=result.datasets,
             courrier_bytes=dossier.courrier_pdf,
+            table_data=table_data,
         )
         result.computed_metadata = computed
     except Exception as e:

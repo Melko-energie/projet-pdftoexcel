@@ -1,0 +1,183 @@
+"""Arborescence des types/categories/sous-categories de demandes fiscales.
+
+Classification basee sur des mots-cles dans le texte du courrier.
+Recherche insensible a la casse ET aux accents.
+"""
+
+import unicodedata
+
+
+def _normalize(text: str) -> str:
+    """Normalise un texte : minuscule, sans accents."""
+    text = text.lower()
+    # Decomposer les caracteres accentues puis supprimer les diacritiques
+    nfkd = unicodedata.normalize("NFD", text)
+    return "".join(c for c in nfkd if unicodedata.category(c) != "Mn")
+
+
+def _contains(text_norm: str, *keywords: str) -> bool:
+    """Verifie si le texte normalise contient un des mots-cles."""
+    return any(kw in text_norm for kw in keywords)
+
+
+# --- Type ---
+
+def deduce_type(objet: str, full_text: str = "") -> str:
+    """Deduit le type depuis l'objet du courrier.
+
+    Regles :
+    - "vacance" → Vacance
+    - "travaux" sans "vacance" → Degrevement pour Travaux
+    - "regularisation" + ("abattement" ou "exoneration") → Regularisation Abattement/Exoneration
+    - "regularisation" seul → Autre Regularisation
+    - sinon → ""
+    """
+    obj = _normalize(objet)
+    txt = _normalize(full_text) if full_text else obj
+
+    if _contains(obj, "vacance"):
+        return "Vacance"
+
+    if _contains(obj, "travaux") and not _contains(obj, "vacance"):
+        return "Degrevement pour Travaux"
+
+    if _contains(obj, "regularisation"):
+        if _contains(obj, "abattement", "exoneration"):
+            return "Regularisation Abattement/Exoneration"
+        return "Autre Regularisation"
+
+    # Fallback sur le texte complet
+    if _contains(txt, "vacance"):
+        return "Vacance"
+
+    if _contains(txt, "degrevement") and _contains(txt, "travaux"):
+        return "Degrevement pour Travaux"
+
+    return ""
+
+
+# --- Categorie ---
+
+def deduce_categorie(type_demande: str, motif: str, objet: str, full_text: str = "") -> str:
+    """Deduit la categorie selon le type.
+
+    Pour Vacance : Demolition / Travaux / Locative
+    Pour Degrevement pour Travaux : Accessibilite PMR / Economie d'energie
+    Pour Regularisation Abattement/Exoneration : sous-types specifiques
+    """
+    motif_n = _normalize(motif)
+    objet_n = _normalize(objet)
+    text_n = _normalize(full_text) if full_text else motif_n + " " + objet_n
+    combined = motif_n + " " + objet_n + " " + text_n
+
+    if type_demande == "Vacance":
+        if _contains(combined, "demolir", "demolition", "demolis"):
+            return "Demolition"
+        if _contains(combined, "travaux"):
+            return "Travaux"
+        if _contains(combined, "locati", "location"):
+            return "Locative"
+        # Defaut pour vacance (ANRU = demolition par defaut)
+        return "Demolition"
+
+    if type_demande == "Degrevement pour Travaux":
+        if _contains(combined, "pmr", "accessibilite", "handicap"):
+            return "Accessibilite PMR"
+        if _contains(combined, "energie", "isolation", "chauffage", "thermique"):
+            return "Economie d'energie"
+        return ""
+
+    if type_demande == "Regularisation Abattement/Exoneration":
+        if _contains(combined, "confort"):
+            return "ElementsDeConfort"
+        if _contains(combined, "coefficient"):
+            return "Coefficients"
+        if _contains(combined, "type de bien"):
+            return "TypeDeBien"
+        if _contains(combined, "hors patrimoine"):
+            return "HorsPatrimoine"
+        if _contains(combined, "fin de gestion"):
+            return "FinDeGestion"
+        if _contains(combined, "vide ordures", "vide-ordures"):
+            return "VideOrdures"
+        if _contains(combined, "logements vacants"):
+            return "ThLogementsVacants"
+        return ""
+
+    return ""
+
+
+# --- Sous-categorie ---
+
+def deduce_sous_categorie(type_demande: str, categorie: str, full_text: str = "") -> str:
+    """Deduit la sous-categorie selon le type et la categorie.
+
+    Pour Accessibilite PMR : parties communes/privatives, ascenseur, etc.
+    Pour Economie d'energie : isolation, chauffage, eclairage, etc.
+    Pour les autres : ""
+    """
+    text_n = _normalize(full_text)
+
+    if categorie == "Accessibilite PMR":
+        if _contains(text_n, "parties communes"):
+            return "Amenagement parties communes"
+        if _contains(text_n, "parties privatives"):
+            return "Amenagement parties privatives"
+        if _contains(text_n, "ascenseur"):
+            return "Ascenseur"
+        if _contains(text_n, "cheminement"):
+            return "Cheminements parties communes"
+        if _contains(text_n, "parking", "elargissement"):
+            return "Elargissement/Amenagement parking"
+        if _contains(text_n, "global"):
+            return "Global"
+        return ""
+
+    if categorie == "Economie d'energie":
+        if _contains(text_n, "isolation"):
+            return "Isolation"
+        if _contains(text_n, "chauffage", "refroidissement"):
+            return "Chauffage/Refroidissement"
+        if _contains(text_n, "eclairage"):
+            return "Eclairage"
+        if _contains(text_n, "eau chaude"):
+            return "Eau chaude"
+        if _contains(text_n, "global"):
+            return "Global"
+        return ""
+
+    return ""
+
+
+# --- Libelle ---
+
+def build_libelle(annee: str, categorie: str, numero_programme: str, commune: str) -> str:
+    """Construit le libelle de la demande.
+
+    Format : 'Degrevement TFPB {annee} - {categorie} {N} programme(s) immobilier(s) {COMMUNE}'
+    """
+    base = "Degrevement TFPB"
+    if annee:
+        base += f" {annee}"
+
+    if not categorie:
+        return base
+
+    # Compter les programmes uniques
+    programmes = [p.strip() for p in numero_programme.split(",") if p.strip()] if numero_programme else []
+    nb_prog = len(programmes)
+
+    if nb_prog == 0:
+        prog_text = ""
+    elif nb_prog == 1:
+        prog_text = "1 programme immobilier"
+    else:
+        prog_text = f"{nb_prog} programmes immobiliers"
+
+    parts = [base, "-", categorie]
+    if prog_text:
+        parts.append(prog_text)
+    if commune:
+        parts.append(commune)
+
+    return " ".join(parts)
