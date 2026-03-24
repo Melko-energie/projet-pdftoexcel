@@ -1,6 +1,7 @@
 """Extraction, nettoyage et consolidation des données tabulaires."""
 
 import logging
+import unicodedata
 from dataclasses import dataclass, field
 
 from .scanner import TableInfo
@@ -114,16 +115,21 @@ def clean_value(value: str, col_type: str):
         return cleaned
 
 
+def _strip_accents(text: str) -> str:
+    """Supprime les accents d'un texte."""
+    return "".join(c for c in unicodedata.normalize("NFD", text) if unicodedata.category(c) != "Mn")
+
+
 def _is_annexe_fiscale(headers: list[str]) -> bool:
     """Détecte si un tableau est une annexe fiscale (contient programme + référence + avis).
 
-    Compare sur la version SANS AUCUN ESPACE pour tolérer les coupures
-    type "program me" ou "l' avis" introduites par pdfplumber.
+    Compare sur la version sans espaces ET sans accents pour tolérer les coupures
+    type "program me" et les accents type "référence" introduits par pdfplumber.
     """
-    joined = " ".join(h.lower().replace("\n", " ") for h in headers if h)
-    joined_no_spaces = joined.replace(" ", "")
-    has_programme = "programme" in joined_no_spaces
-    has_ref_avis = "reference" in joined_no_spaces and "avis" in joined_no_spaces
+    joined = " ".join(h.lower().replace("\n", " ") if h else "" for h in headers)
+    normalized = _strip_accents(joined).replace(" ", "")
+    has_programme = "programme" in normalized
+    has_ref_avis = "reference" in normalized and "avis" in normalized
     return has_programme and has_ref_avis
 
 
