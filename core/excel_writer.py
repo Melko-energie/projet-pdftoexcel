@@ -132,45 +132,42 @@ def write_dataset_to_sheet(ws, dataset: Dataset) -> None:
 
 
 def write_metadata_sheet(ws, metadata_rows: list[tuple[str, object]]) -> None:
-    """Écrit une feuille de métadonnées clé/valeur.
+    """Écrit une feuille de métadonnées en disposition horizontale.
+
+    Les noms des champs sont en en-têtes sur la ligne 1,
+    les valeurs correspondantes sur la ligne 2.
 
     Args:
         ws: Feuille openpyxl.
         metadata_rows: Liste de tuples (clé, valeur). Les valeurs float
             reçoivent le format euro.
     """
-    # Headers
-    for col_idx, header in enumerate(["Champ", "Valeur"], start=1):
-        cell = ws.cell(row=1, column=col_idx, value=header)
+    # Ligne 1 : noms des champs en en-têtes horizontaux
+    for col_idx, (key, _) in enumerate(metadata_rows, start=1):
+        cell = ws.cell(row=1, column=col_idx, value=key)
         cell.fill = HEADER_FILL
         cell.font = HEADER_FONT
         cell.alignment = HEADER_ALIGNMENT
         cell.border = THIN_BORDER
 
-    # Données
-    for row_idx, (key, value) in enumerate(metadata_rows, start=2):
-        key_cell = ws.cell(row=row_idx, column=1, value=key)
-        key_cell.fill = META_KEY_FILL
-        key_cell.font = META_KEY_FONT
-        key_cell.alignment = CELL_ALIGNMENT
-        key_cell.border = THIN_BORDER
-
-        # Ecrire la valeur (garder les float/int tels quels, convertir None en "")
+    # Ligne 2 : valeurs correspondantes
+    for col_idx, (_, value) in enumerate(metadata_rows, start=1):
         display_value = value if value is not None else ""
-        val_cell = ws.cell(row=row_idx, column=2, value=display_value)
+        val_cell = ws.cell(row=2, column=col_idx, value=display_value)
         val_cell.font = META_VAL_FONT
         val_cell.alignment = CELL_ALIGNMENT
         val_cell.border = THIN_BORDER
 
-        # Format euro pour les valeurs numeriques
         if isinstance(value, float):
             val_cell.number_format = EURO_FORMAT
 
-    # Largeurs
-    ws.column_dimensions["A"].width = 35
-    ws.column_dimensions["B"].width = 80
+    # Auto-ajustement largeur des colonnes
+    for col_idx, (key, value) in enumerate(metadata_rows, start=1):
+        width = max(len(str(key)), len(str(value or ""))) + 4
+        width = min(width, 50)
+        ws.column_dimensions[get_column_letter(col_idx)].width = width
 
-    ws.freeze_panes = "A2"
+    ws.freeze_panes = "B1"
 
 
 def write_excel(
