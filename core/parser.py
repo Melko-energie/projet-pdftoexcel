@@ -115,12 +115,16 @@ def clean_value(value: str, col_type: str):
 
 
 def _is_annexe_fiscale(headers: list[str]) -> bool:
-    """Détecte si un tableau est une annexe fiscale (contient programme + référence + avis)."""
-    normalized = [normalize_header(h) for h in headers]
-    joined = " ".join(normalized)
-    has_programme = "programme" in joined
-    has_reference_avis = ("référence" in joined or "reference" in joined) and "avis" in joined
-    return has_programme and has_reference_avis
+    """Détecte si un tableau est une annexe fiscale (contient programme + référence + avis).
+
+    Compare sur la version SANS AUCUN ESPACE pour tolérer les coupures
+    type "program me" ou "l' avis" introduites par pdfplumber.
+    """
+    joined = " ".join(h.lower().replace("\n", " ") for h in headers if h)
+    joined_no_spaces = joined.replace(" ", "")
+    has_programme = "programme" in joined_no_spaces
+    has_ref_avis = "reference" in joined_no_spaces and "avis" in joined_no_spaces
+    return has_programme and has_ref_avis
 
 
 def process_tables(tables: list[TableInfo]) -> list[Dataset]:

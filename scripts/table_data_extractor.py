@@ -16,11 +16,16 @@ def find_column_index(headers: list[str], keywords: list[str]) -> int | None:
     """Trouve l'index d'une colonne par mots-cles dans le header.
 
     Tous les keywords doivent etre presents dans le header normalise.
+    Compare aussi sur la version sans espaces pour tolerer les coupures
+    type "program me" introduites par pdfplumber.
     Retourne None si pas trouve.
     """
     for i, h in enumerate(headers):
+        if not h:
+            continue
         h_norm = _normalize_header(h)
-        if all(kw in h_norm for kw in keywords):
+        h_no_spaces = h_norm.replace(" ", "")
+        if all(kw.replace(" ", "") in h_no_spaces for kw in keywords):
             return i
     return None
 
@@ -70,6 +75,9 @@ def is_valid_programme(value) -> bool:
     """Verifie qu'une valeur est un N de programme valide (3-5 chiffres)."""
     if value is None:
         return False
+    # Gerer les floats type 1146.0 → "1146"
+    if isinstance(value, float) and value == int(value):
+        value = int(value)
     text = str(value).strip()
     if not text:
         return False
@@ -166,7 +174,10 @@ def extract_from_datasets(datasets: list) -> TableExtractedData:
 
             # Programme
             if prog_col is not None and prog_col < len(row):
-                val = str(row[prog_col]).strip() if row[prog_col] is not None else ""
+                raw_val = row[prog_col]
+                if isinstance(raw_val, float) and raw_val == int(raw_val):
+                    raw_val = int(raw_val)
+                val = str(raw_val).strip() if raw_val is not None else ""
                 if is_valid_programme(val) and val not in progs_seen:
                     progs_seen.add(val)
                     progs_set.append(val)

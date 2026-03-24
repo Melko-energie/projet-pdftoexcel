@@ -15,10 +15,18 @@ from pathlib import Path
 from openpyxl import Workbook
 
 from .excel_writer import (
+    CELL_ALIGNMENT,
+    EURO_FORMAT,
+    HEADER_ALIGNMENT,
+    HEADER_FILL,
+    HEADER_FONT,
+    META_VAL_FONT,
+    THIN_BORDER,
     _sanitize_sheet_name,
     write_dataset_to_sheet,
     write_metadata_sheet,
 )
+from openpyxl.utils import get_column_letter
 from .metadata import (
     DossierMetadata,
     RawMetadata,
@@ -272,6 +280,7 @@ def process_demande(
             datasets=result.datasets,
             courrier_bytes=dossier.courrier_pdf,
             table_data=table_data,
+            prefix=dossier.prefix,
         )
         result.computed_metadata = computed
     except Exception as e:
@@ -334,6 +343,70 @@ def process_zip(
     return results
 
 
+def _build_recapitulatif_excel(results: list[DemandeResult]) -> bytes:
+    """Génère un Excel récapitulatif avec une ligne par demande."""
+    wb = Workbook()
+    wb.remove(wb.active)
+    ws = wb.create_sheet(title="Recapitulatif")
+
+    # Collecter les rows de chaque demande
+    all_rows = []
+    for r in results:
+        meta_rows = computed_metadata_to_rows(r.computed_metadata)
+        all_rows.append(meta_rows)
+
+    if not all_rows:
+        buf = io.BytesIO()
+        wb.save(buf)
+        buf.seek(0)
+        return buf.getvalue()
+
+    # Headers (ligne 1)
+    headers = [key for key, _ in all_rows[0]]
+    for col_idx, header in enumerate(headers, start=1):
+        cell = ws.cell(row=1, column=col_idx, value=header)
+        cell.fill = HEADER_FILL
+        cell.font = HEADER_FONT
+        cell.alignment = HEADER_ALIGNMENT
+        cell.border = THIN_BORDER
+
+    # Données (une ligne par demande)
+    for row_num, meta_rows in enumerate(all_rows, start=2):
+        for col_idx, (key, value) in enumerate(meta_rows, start=1):
+            if value is None or value == "":
+                cell = ws.cell(row=row_num, column=col_idx, value=None)
+            else:
+                cell = ws.cell(row=row_num, column=col_idx, value=value)
+                if isinstance(value, float):
+                    cell.number_format = EURO_FORMAT
+            cell.font = META_VAL_FONT
+            cell.alignment = CELL_ALIGNMENT
+            cell.border = THIN_BORDER
+
+    # Auto-ajustement largeur
+    for col_idx, header in enumerate(headers, start=1):
+        col_letter = get_column_letter(col_idx)
+        max_len = len(str(header))
+        for meta_rows in all_rows[:50]:
+            _, val = meta_rows[col_idx - 1]
+            if val is not None and val != "":
+                max_len = max(max_len, len(str(val)))
+        ws.column_dimensions[col_letter].width = min(max_len + 4, 50)
+
+    ws.freeze_panes = "A2"
+
+    # Auto-filtre
+    if headers:
+        last_col = get_column_letter(len(headers))
+        last_row = 1 + len(all_rows)
+        ws.auto_filter.ref = f"A1:{last_col}{last_row}"
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return buf.getvalue()
+
+
 def build_output_zip(results: list[DemandeResult]) -> bytes:
     """Construit le ZIP de sortie structuré par demande.
 
@@ -369,6 +442,11 @@ def build_output_zip(results: list[DemandeResult]) -> bytes:
                     f"{folder}/{result.prefix}_Métadonnées.xlsx",
                     result.metadata_excel,
                 )
+
+        # Récapitulatif global à la racine du ZIP
+        if len(results) > 0:
+            recap_bytes = _build_recapitulatif_excel(results)
+            zf.writestr("Recapitulatif_Metadonnees.xlsx", recap_bytes)
 
     buf.seek(0)
     return buf.getvalue()

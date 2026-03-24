@@ -82,6 +82,17 @@ def scan_pdf(pdf_path: Path, min_cols: int = 8, min_rows: int = 1) -> ScanResult
                 rows = table[1:]
                 col_count = len(headers)
 
+                # Filtrage : faux tableaux (en-tête courrier)
+                first_cells = " ".join(
+                    str(c).strip() for c in raw_headers[:3] if c
+                ).upper()
+                if any(kw in first_cells for kw in ["MELKO", "ENERGIE", "POUR LE COMPTE"]):
+                    logger.debug(
+                        "Page %d, tableau %d : ignoré (faux tableau en-tête courrier)",
+                        page_num, table_idx + 1,
+                    )
+                    continue
+
                 # Filtrage : min colonnes
                 if col_count < min_cols:
                     logger.debug(

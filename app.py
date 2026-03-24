@@ -82,6 +82,8 @@ def main():
         st.session_state.processing_done = False
     if "errors" not in st.session_state:
         st.session_state.errors = []
+    if "uploader_key" not in st.session_state:
+        st.session_state.uploader_key = 0
 
     st.title("\U0001f4c4 PDF Table Extractor")
 
@@ -140,9 +142,22 @@ def main():
         type=["pdf", "zip"],
         accept_multiple_files=True,
         help="Glissez un fichier ZIP (lot de demandes) ou des fichiers PDF individuels.",
+        key=f"uploader_{st.session_state.uploader_key}",
     )
 
     if not uploaded_files:
+        if st.button(
+            "\U0001f504 Nouveau courrier",
+            type="secondary",
+            use_container_width=True,
+            help="Reinitialiser et deposer de nouveaux fichiers",
+        ):
+            st.session_state.results = None
+            st.session_state.output_data = None
+            st.session_state.processing_done = False
+            st.session_state.errors = []
+            st.session_state.uploader_key += 1
+            st.rerun()
         return
 
     # Resume des fichiers deposes
@@ -194,6 +209,19 @@ def main():
     ):
         min_cols_val = min_cols if "min_cols" in dir() else DEFAULT_MIN_COLS
         _run_extraction(uploaded_files, min_cols_val)
+
+    if st.button(
+        "\U0001f504 Nouveau courrier",
+        type="secondary",
+        use_container_width=True,
+        help="Reinitialiser et deposer de nouveaux fichiers",
+    ):
+        st.session_state.results = None
+        st.session_state.output_data = None
+        st.session_state.processing_done = False
+        st.session_state.errors = []
+        st.session_state.uploader_key += 1
+        st.rerun()
 
 
 def pdf_files_label(pdf_files: list) -> str:
@@ -352,7 +380,8 @@ def _render_results():
             cols[3].caption(f"Lignes : {r.row_count}")
 
             if r.datasets:
-                for ds in r.datasets:
+                annexe_datasets = [ds for ds in r.datasets if "annexe" in ds.name.lower()]
+                for ds in annexe_datasets:
                     preview_rows = ds.data_rows[:5]
                     if preview_rows:
                         preview_data = []
@@ -378,6 +407,19 @@ def _render_results():
             use_container_width=True,
             help="Archive ZIP contenant un dossier par demande avec les PDF originaux et les Excel generes.",
         )
+
+    if st.button(
+        "\U0001f504 Nouveau courrier",
+        type="secondary",
+        use_container_width=True,
+        help="Reinitialiser et deposer de nouveaux fichiers",
+    ):
+        st.session_state.results = None
+        st.session_state.output_data = None
+        st.session_state.processing_done = False
+        st.session_state.errors = []
+        st.session_state.uploader_key += 1
+        st.rerun()
 
     # Footer
     st.divider()

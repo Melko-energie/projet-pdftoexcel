@@ -10,6 +10,7 @@ from .classification import (
     deduce_sous_categorie,
     deduce_type,
 )
+from .commune_finder import find_commune
 from .raw_extractor import RawMetadata, _extract_all_text
 from .table_data_extractor import TableExtractedData, extract_from_datasets
 
@@ -27,6 +28,7 @@ MOIS_FR = {
 class ComputedMetadata:
     """Donnees metier calculees a partir des donnees brutes."""
     # Identifiant
+    numero_dossier: str = ""
     libelle_demande: str = ""
     responsable: str = ""
 
@@ -36,10 +38,10 @@ class ComputedMetadata:
     sous_categorie: str = ""
 
     # Montants
-    montant_ht: float = 0.0
-    taux_tva: str = "0%"
-    montant_ttc: float = 0.0
-    montant_demande: float = 0.0
+    montant_ht: object = ""
+    taux_tva: str = ""
+    montant_ttc: object = ""
+    montant_demande: object = ""
 
     # Entreprise
     nom_entreprise: str = ""
@@ -67,7 +69,7 @@ class ComputedMetadata:
     # Divers
     commentaire: str = ""
     lien_escale: str = ""
-    montant_subvention: float = 0.0
+    montant_subvention: object = ""
 
 
 def parse_montant(raw: str) -> float:
@@ -108,7 +110,7 @@ def extract_entreprise(courrier_bytes: bytes | None) -> str:
     """Extrait le nom de l'entreprise/bailleur depuis le texte du courrier."""
     if not courrier_bytes:
         return ""
-    text = _extract_all_text(courrier_bytes)
+    text, _ = _extract_all_text(courrier_bytes)
     if not text:
         return ""
 
@@ -157,6 +159,7 @@ def compute_metadata(
     datasets=None,
     courrier_bytes: bytes | None = None,
     table_data: TableExtractedData | None = None,
+    prefix: str = "",
 ) -> ComputedMetadata:
     """Transforme RawMetadata en ComputedMetadata.
 
@@ -165,8 +168,10 @@ def compute_metadata(
         datasets: Datasets du parser (fallback si table_data absent).
         courrier_bytes: Bytes du courrier pour extraction entreprise.
         table_data: Donnees extraites des colonnes des tableaux (prioritaire).
+        prefix: Prefixe numerique du dossier (N° Dossier).
     """
     c = ComputedMetadata()
+    c.numero_dossier = prefix
 
     # Extraire table_data depuis datasets si pas fourni
     if table_data is None and datasets:
@@ -187,9 +192,12 @@ def compute_metadata(
     else:
         c.numero_programme = extract_numero_programme_from_tables(datasets)
 
-    if table_data and table_data.commune:
+    # Commune : chercher dans le texte du courrier via la liste officielle
+    commune = find_commune(raw.text_page1, raw.objet_complet)
+    # Fallback sur le tableau si pas trouve
+    if not commune and table_data:
         commune = table_data.commune
-    else:
+    if not commune:
         commune = raw.commune
 
     # --- Libelle ---
@@ -197,8 +205,8 @@ def compute_metadata(
     cat_label = f"{c.type_demande} {c.categorie}".strip() if c.categorie else c.type_demande
     c.libelle_demande = build_libelle(raw.annee_fiscale, cat_label, c.numero_programme, commune)
 
-    # --- Responsable ---
-    c.responsable = raw.responsable
+    # --- Responsable (valeur fixe) ---
+    c.responsable = "Amaury MONGONGU"
 
     # --- Champs conditionnels (seulement si sous-categorie existe) ---
     if c.sous_categorie:
@@ -209,12 +217,12 @@ def compute_metadata(
         c.montant_ttc = parse_montant(raw.montant_ttc_raw) if raw.montant_ttc_raw else parse_montant(raw.montant_total_imposition)
         c.montant_subvention = parse_montant(raw.montant_subvention_raw)
     else:
-        c.montant_ht = 0.0
+        c.montant_ht = ""
         c.nom_entreprise = ""
         c.taux_tva = ""
         c.nature_travaux = ""
-        c.montant_ttc = 0.0
-        c.montant_subvention = 0.0
+        c.montant_ttc = ""
+        c.montant_subvention = ""
 
     c.nature_depenses = "Degrevement taxe fonciere"
 
@@ -246,37 +254,22 @@ def compute_metadata(
     # Date limite = 31/12 de l'annee suivant l'annee fiscale
     if raw.annee_fiscale:
         try:
-            c.date_limite_envoi = f"31/12/{int(raw.annee_fiscale) + 1}"
+            c.date_limite_envoi = f"31/12/{int(raw.annee_fiscale) + 2}"
         except ValueError:
             c.date_limite_envoi = format_date_fr(raw.date_limite_envoi)
     else:
         c.date_limite_envoi = format_date_fr(raw.date_limite_envoi)
 
-    # Type d'envoi
-    if raw.numero_lr_ar:
-        c.type_envoi = "RecommandeAvecAR"
-    elif raw.numero_lr_depot:
-        c.type_envoi = "Recommande"
-    else:
-        c.type_envoi = ""
+    # Type d'envoi (valeur fixe)
+    c.type_envoi = "RecommandeAvecAR"
 
     c.numero_recommande = raw.numero_lr_depot
 
-    # --- Interlocuteur (destinataire, pas expediteur) ---
-    if raw.interlocuteur_nom:
-        c.nom_interlocuteur = raw.interlocuteur_nom
-        c.prenom_interlocuteur = raw.interlocuteur_prenom
-    else:
-        # Fallback sur l'ancien champ nom_destinataire
-        dest = raw.nom_destinataire.strip()
-        parts = dest.split() if dest else []
-        if len(parts) >= 2:
-            c.nom_interlocuteur = parts[-1]
-            c.prenom_interlocuteur = " ".join(parts[:-1])
-        elif len(parts) == 1:
-            c.nom_interlocuteur = parts[0]
-    c.mail_interlocuteur = ""  # jamais dans le courrier
-    c.tel_interlocuteur = raw.interlocuteur_tel
+    # --- Interlocuteur (valeurs fixes) ---
+    c.nom_interlocuteur = "JOUHANNET"
+    c.prenom_interlocuteur = "Alexis"
+    c.mail_interlocuteur = "alexis.jouhannet@dgfip.finances.gouv.fr"
+    c.tel_interlocuteur = "0322468319"
 
     # --- Divers ---
     c.lien_escale = ""
@@ -287,6 +280,7 @@ def compute_metadata(
 def computed_metadata_to_rows(c: ComputedMetadata) -> list[tuple[str, object]]:
     """Convertit ComputedMetadata en liste ordonnee de (label, valeur) pour Excel."""
     return [
+        ("N° Dossier", c.numero_dossier),
         ("Libelle de la Demande", c.libelle_demande),
         ("Responsable", c.responsable),
         ("Type", c.type_demande),

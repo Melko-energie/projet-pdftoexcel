@@ -132,43 +132,43 @@ def write_dataset_to_sheet(ws, dataset: Dataset) -> None:
 
 
 def write_metadata_sheet(ws, metadata_rows: list[tuple[str, object]]) -> None:
-    """Écrit une feuille de métadonnées clé/valeur.
+    """Écrit une feuille de métadonnées en disposition horizontale.
+
+    Ligne 1 : noms des champs (headers).
+    Ligne 2 : valeurs correspondantes.
 
     Args:
         ws: Feuille openpyxl.
         metadata_rows: Liste de tuples (clé, valeur). Les valeurs float
             reçoivent le format euro.
     """
-    # Headers
-    for col_idx, header in enumerate(["Champ", "Valeur"], start=1):
-        cell = ws.cell(row=1, column=col_idx, value=header)
+    # Ligne 1 : noms des champs (headers horizontaux)
+    for col_idx, (key, _value) in enumerate(metadata_rows, start=1):
+        cell = ws.cell(row=1, column=col_idx, value=key)
         cell.fill = HEADER_FILL
         cell.font = HEADER_FONT
         cell.alignment = HEADER_ALIGNMENT
         cell.border = THIN_BORDER
 
-    # Données
-    for row_idx, (key, value) in enumerate(metadata_rows, start=2):
-        key_cell = ws.cell(row=row_idx, column=1, value=key)
-        key_cell.fill = META_KEY_FILL
-        key_cell.font = META_KEY_FONT
-        key_cell.alignment = CELL_ALIGNMENT
-        key_cell.border = THIN_BORDER
-
-        # Ecrire la valeur (garder les float/int tels quels, convertir None en "")
-        display_value = value if value is not None else ""
-        val_cell = ws.cell(row=row_idx, column=2, value=display_value)
+    # Ligne 2 : valeurs
+    for col_idx, (key, value) in enumerate(metadata_rows, start=1):
+        # Si vide ou None, ecrire une cellule vide (pas de 0, pas de format euro)
+        if value is None or value == "":
+            val_cell = ws.cell(row=2, column=col_idx, value=None)
+        else:
+            val_cell = ws.cell(row=2, column=col_idx, value=value)
+            if isinstance(value, float):
+                val_cell.number_format = EURO_FORMAT
         val_cell.font = META_VAL_FONT
         val_cell.alignment = CELL_ALIGNMENT
         val_cell.border = THIN_BORDER
 
-        # Format euro pour les valeurs numeriques
-        if isinstance(value, float):
-            val_cell.number_format = EURO_FORMAT
-
-    # Largeurs
-    ws.column_dimensions["A"].width = 35
-    ws.column_dimensions["B"].width = 80
+    # Auto-ajustement largeur par colonne
+    for col_idx, (key, value) in enumerate(metadata_rows, start=1):
+        col_letter = get_column_letter(col_idx)
+        header_len = len(str(key))
+        value_len = len(str(value)) if value is not None else 0
+        ws.column_dimensions[col_letter].width = min(max(header_len, value_len) + 4, 50)
 
     ws.freeze_panes = "A2"
 
