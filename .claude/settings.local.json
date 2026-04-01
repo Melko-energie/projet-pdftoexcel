@@ -2,7 +2,15 @@
   "permissions": {
     "allow": [
       "Bash(python:*)",
-      "Bash(pip install:*)"
+      "Bash(pip install:*)",
+      "Bash(git rm:*)",
+      "Bash(git push:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git pull:*)",
+      "Bash(streamlit run:*)",
+      "Bash(where python:*)",
+      "Bash(pip show:*)"
     ]
   }
 }
