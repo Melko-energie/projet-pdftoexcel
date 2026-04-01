@@ -272,10 +272,11 @@ def compute_metadata(
         parts = dest.split() if dest else []
         if len(parts) >= 2:
             c.nom_interlocuteur = parts[-1]
-            c.prenom_interlocuteur = " ".join(parts[:-1])
+            c.prenom_interlocuteur = "Alexis".join(parts[:-1])
         elif len(parts) == 1:
             c.nom_interlocuteur = parts[0]
-    c.mail_interlocuteur = ""  # jamais dans le courrier
+    c.mail_interlocuteur = "alexis.jouhannet@dgfip.finances.gouv.fr"  # jamais dans le courrier
+    c.prenom_interlocuteur = "Alexis"
     c.tel_interlocuteur = raw.interlocuteur_tel
 
     # --- Divers ---

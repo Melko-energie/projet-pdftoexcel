@@ -139,7 +139,7 @@ def extract_from_datasets(datasets: list) -> TableExtractedData:
         headers = ds.headers
 
         # Trouver les colonnes cibles
-        ref_col = find_column_index(headers, ["reference", "avis"])
+        ref_col = find_column_index(headers, ["reference", "avis", "N° d'avis d'imposition"])#! adapter par rapport a la position dans le tableau
         addr_col = find_column_index_exact(headers, "adresse")
         montant_col = find_column_index(headers, ["montant", "degrevement"])
         prog_col = find_column_index(headers, ["programme"])
