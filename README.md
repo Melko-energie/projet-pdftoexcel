@@ -61,6 +61,30 @@ Ouvre le navigateur sur `localhost:8501` avec une interface drag & drop pour upl
 - Nettoyage des données : valeurs monétaires (`542,78 €` → `542.78`), dates, mois de vacance
 - Séparation des lignes de total/sous-total
 - Formatage Excel professionnel : headers colorés, lignes alternées, formats monétaires/dates, filtres auto
+- Extraction des métadonnées du courrier (référence, date, objet, etc.) en disposition horizontale dans l'Excel
+- Bouton "Nouveau courrier" pour réinitialiser l'interface et uploader un nouveau fichier sans recharger la page
+
+## Architecture
+
+```
+projet_pdftoexcel/
+├── app.py                          # Interface Streamlit
+├── extractor.py                    # CLI (scan / extract / batch)
+├── core/
+│   ├── parser.py                   # Parsing PDF et détection de tableaux
+│   ├── excel_writer.py             # Génération Excel avec formatage
+│   ├── pipeline.py                 # Pipeline de traitement (ZIP / PDF)
+│   ├── metadata.py                 # Extraction des métadonnées du courrier
+│   └── utils.py                    # Utilitaires
+├── scripts/
+│   ├── raw_extractor.py            # Extraction brute des données PDF
+│   ├── classification.py           # Classification des types de courrier
+│   ├── metadata_transformer.py     # Transformation des métadonnées
+│   ├── regex_patterns.py           # Patterns regex pour l'extraction
+│   └── table_data_extractor.py     # Extraction des données tabulaires
+├── requirements.txt
+└── README.md
+```
 
 ## Stack technique
 

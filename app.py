@@ -93,20 +93,6 @@ def main():
         st.header("\U0001f4c4 PDF Table Extractor")
         st.divider()
 
-        # Bouton principal change selon l'etape
-        if st.session_state.processing_done:
-            if st.button(
-                "\U0001f504 Recommencer",
-                type="primary",
-                use_container_width=True,
-                help="Reinitialiser et deposer de nouveaux fichiers",
-            ):
-                st.session_state.results = None
-                st.session_state.output_data = None
-                st.session_state.processing_done = False
-                st.session_state.errors = []
-                st.rerun()
-
         with st.expander("Options avancees"):
             min_cols = st.slider(
                 "Colonnes minimum par tableau",
@@ -371,6 +357,7 @@ def _render_results():
             use_container_width=True,
         )
 
+    # Bouton reinitialiser
     if st.button(
         "\U0001f504 Nouveau courrier",
         type="secondary",

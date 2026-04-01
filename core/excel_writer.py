@@ -170,7 +170,7 @@ def write_metadata_sheet(ws, metadata_rows: list[tuple[str, object]]) -> None:
         value_len = len(str(value)) if value is not None else 0
         ws.column_dimensions[col_letter].width = min(max(header_len, value_len) + 4, 50)
 
-    ws.freeze_panes = "A2"
+    ws.freeze_panes = "B1"
 
 
 def write_excel(
