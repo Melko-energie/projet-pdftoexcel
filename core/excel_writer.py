@@ -173,7 +173,13 @@ def write_metadata_sheet(
             val_cell.fill = META_VAL_RED_FILL
         else:
             val_cell.font = META_VAL_FONT
-        val_cell.alignment = CELL_ALIGNMENT
+        # Active wrap_text uniquement si la valeur contient un retour a la ligne,
+        # pour que les adresses multi-lignes (numeros impairs) s'affichent correctement.
+        # Les autres cellules conservent l'alignement standard inchange.
+        if isinstance(value, str) and "\n" in value:
+            val_cell.alignment = Alignment(vertical="center", wrap_text=True)
+        else:
+            val_cell.alignment = CELL_ALIGNMENT
         val_cell.border = THIN_BORDER
 
     # Auto-ajustement largeur par colonne

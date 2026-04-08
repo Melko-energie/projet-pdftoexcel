@@ -389,7 +389,14 @@ def _build_recapitulatif_excel(results: list[DemandeResult]) -> bytes:
                 cell.fill = META_VAL_RED_FILL
             else:
                 cell.font = META_VAL_FONT
-            cell.alignment = CELL_ALIGNMENT
+            # Active wrap_text uniquement si la valeur contient un retour a la ligne
+            # (adresses multi-lignes pour numeros impairs). Les autres cellules
+            # conservent l'alignement standard inchange.
+            if isinstance(value, str) and "\n" in value:
+                from openpyxl.styles import Alignment
+                cell.alignment = Alignment(vertical="center", wrap_text=True)
+            else:
+                cell.alignment = CELL_ALIGNMENT
             cell.border = THIN_BORDER
 
     # Auto-ajustement largeur

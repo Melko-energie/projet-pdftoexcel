@@ -375,7 +375,31 @@ def compute_metadata(
                 if final and final not in seen:
                     seen.add(final)
                     unique.append(final)
-        c.adresse = ";".join(unique)
+        # Mise en forme selon la parite du numero en tete d'adresse :
+        # - Numeros pairs : restent groupes sur une meme ligne, separes par ";"
+        # - Numeros impairs : chaque adresse sur sa propre ligne (";\n" entre chacune)
+        # - Cas mixte : pairs d'abord (meme ligne), puis retour ligne, puis impairs
+        # - Adresses sans numero en tete : conservees en fin, separees par ";" (inchange)
+        pairs_list: list[str] = []
+        odds_list: list[str] = []
+        others_list: list[str] = []
+        for adr in unique:
+            m = re.match(r"\s*(\d+)", adr)
+            if m:
+                if int(m.group(1)) % 2 == 0:
+                    pairs_list.append(adr)
+                else:
+                    odds_list.append(adr)
+            else:
+                others_list.append(adr)
+        groups: list[str] = []
+        if pairs_list:
+            groups.append(";".join(pairs_list))
+        if odds_list:
+            groups.append(";\n".join(odds_list))
+        if others_list:
+            groups.append(";".join(others_list))
+        c.adresse = ";\n".join(groups) if len(groups) > 1 else (groups[0] if groups else "")
 
     try:
         c.nombre_logements = int(raw.nombre_logements) if raw.nombre_logements else 0
