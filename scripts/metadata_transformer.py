@@ -1,8 +1,11 @@
 """Etape 2 : Transformation des donnees brutes en donnees metier."""
 
+import json
 import logging
 import re
+import unicodedata
 from dataclasses import dataclass
+from pathlib import Path
 
 from .classification import (
     build_libelle,
@@ -15,6 +18,111 @@ from .raw_extractor import RawMetadata, _extract_all_text
 from .table_data_extractor import TableExtractedData, extract_from_datasets
 
 logger = logging.getLogger(__name__)
+
+
+# Detecte une sequence de numeros de maison (separes par , ; "et" &)
+# Ex: "9", "14, 16, 18", "9 et 11", "1;3;5"
+_NUM_SEQ_RE = re.compile(
+    r"\d+(?:\s*(?:,|;|et|&)\s*\d+)*",
+    re.IGNORECASE,
+)
+
+
+def _strip_accents(s: str) -> str:
+    return "".join(c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn")
+
+
+def _load_abbreviations() -> list[tuple[str, str]]:
+    """Charge abbreviations.json (racine projet) et retourne liste (key_norm, abbr)
+    triee par longueur decroissante (plus long match d'abord)."""
+    path = Path(__file__).resolve().parent.parent / "abbreviations.json"
+    if not path.exists():
+        logger.warning("abbreviations.json introuvable a %s", path)
+        return []
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+    except (json.JSONDecodeError, OSError) as e:
+        logger.warning("Impossible de charger abbreviations.json : %s", e)
+        return []
+    flat: dict[str, str] = {}
+    for section in data.values():
+        if isinstance(section, dict):
+            flat.update(section)
+    # Normalise les cles (sans accents, majuscules) pour matching
+    items = [(_strip_accents(k).upper(), v) for k, v in flat.items()]
+    # Trie par longueur de cle decroissante pour que le plus long match gagne
+    items.sort(key=lambda kv: -len(kv[0]))
+    return items
+
+
+_ABBREVIATIONS = _load_abbreviations()
+
+
+def _apply_abbreviations(addr: str) -> str:
+    """Remplace les libelles de voie par leur abreviation (abbreviations.json).
+
+    Insensible a la casse et aux accents. Le match le plus long gagne.
+    Exemple : "9 Allée des Ecoles" -> "9 ALL des Ecoles"
+    """
+    if not addr or not _ABBREVIATIONS:
+        return addr
+    # Travail sur version normalisee (ASCII upper) pour matcher
+    norm = _strip_accents(addr).upper()
+    consumed = [False] * len(addr)
+    replacements: list[tuple[int, int, str]] = []
+    for key_norm, val in _ABBREVIATIONS:
+        pattern = re.compile(r"\b" + re.escape(key_norm) + r"\b")
+        for m in pattern.finditer(norm):
+            s, e = m.start(), m.end()
+            if any(consumed[s:e]):
+                continue
+            replacements.append((s, e, val))
+            for i in range(s, e):
+                consumed[i] = True
+    # Applique de droite a gauche pour preserver les indices
+    replacements.sort(key=lambda r: -r[0])
+    result = addr
+    for s, e, val in replacements:
+        result = result[:s] + val + result[e:]
+    return result
+
+
+def _expand_address(addr: str) -> list[str]:
+    """Dedouble une adresse en adresses individuelles, meme si la cellule
+    contient PLUSIEURS voies collees.
+
+    Exemples :
+      "9,11,13 et 15 Allée des Ecoles"
+        -> ["9 Allée des Ecoles", "11 Allée des Ecoles",
+            "13 Allée des Ecoles", "15 Allée des Ecoles"]
+
+      "1 CHE DE BUSSU 14, 16, 18 RUE DE FAY"
+        -> ["1 CHE DE BUSSU",
+            "14 RUE DE FAY", "16 RUE DE FAY", "18 RUE DE FAY"]
+
+    Strategie : trouve toutes les sequences de numeros ; le texte entre
+    une sequence et la suivante (ou la fin) est le libelle de voie.
+    Si aucun numero n'est trouve, retourne l'adresse telle quelle.
+    """
+    if not addr:
+        return []
+    addr = addr.strip()
+    matches = list(_NUM_SEQ_RE.finditer(addr))
+    if not matches:
+        return [addr]
+
+    results: list[str] = []
+    for i, m in enumerate(matches):
+        next_start = matches[i + 1].start() if i + 1 < len(matches) else len(addr)
+        voie = addr[m.end():next_start].strip().rstrip(",;").strip()
+        if not voie:
+            continue
+        numbers = re.findall(r"\d+", m.group(0))
+        for n in numbers:
+            results.append(f"{n} {voie}")
+
+    return results if results else [addr]
 
 MOIS_FR = {
     "janvier": "01", "février": "02", "fevrier": "02", "mars": "03",
@@ -256,6 +364,18 @@ def compute_metadata(
         c.adresse = raw.adresses
     # Remplace toutes les apostrophes (droites et typographiques) par un espace
     c.adresse = c.adresse.replace("\u2019", " ").replace("'", " ")
+    # Dedoublage des adresses multi-numeros, multi-voies, puis abreviation,
+    # puis deduplication en preservant l'ordre.
+    if c.adresse:
+        seen: set[str] = set()
+        unique: list[str] = []
+        for part in c.adresse.split(";"):
+            for sub in _expand_address(part):
+                final = _apply_abbreviations(sub)
+                if final and final not in seen:
+                    seen.add(final)
+                    unique.append(final)
+        c.adresse = ";".join(unique)
 
     try:
         c.nombre_logements = int(raw.nombre_logements) if raw.nombre_logements else 0

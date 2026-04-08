@@ -62,7 +62,7 @@ COLUMN_SEARCH = {
     "commune":        ["commune"],                   # "Commune"
     "adresse":        ["adresse", "travaux"],         # "Adresse des travaux"
     "montant_deg":    ["degrevement"],               # "Montant degrevement demande"
-    "montant_ht":     ["montant", "ht", "facture"],  # "Montant HT facture"
+    "montant_ht":     ["montant", "eligibles"],       # "Montant des travaux eligibles retenus H.T"
     "taux_tva":       ["taux", "tva"],               # "Taux de TVA facture"
     "montant_ttc":    ["montant", "ttc", "facture"], # "Montant TTC facture"
     "subvention":     ["subvention"],                # "Montant subventions encaisses"
