@@ -23,6 +23,7 @@ from scripts.raw_extractor import (  # noqa: F401
 from scripts.metadata_transformer import (  # noqa: F401
     ComputedMetadata,
     compute_metadata,
+    computed_metadata_red_keys,
     computed_metadata_to_rows,
 )
 

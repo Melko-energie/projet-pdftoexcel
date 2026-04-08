@@ -71,6 +71,9 @@ class ComputedMetadata:
     lien_escale: str = ""
     montant_subvention: object = ""
 
+    # Flags de verification (non ecrits en cellule, utilises pour styling)
+    montant_ttc_check_ok: bool = True
+
 
 def parse_montant(raw: str) -> float:
     """Convertit '55 245' ou '106 281,50' en float."""
@@ -213,11 +216,14 @@ def compute_metadata(
 
     # --- Champs extraits du tableau (remplis si disponibles) ---
     if table_data:
-        c.montant_ht = table_data.montant_ht_total if table_data.montant_ht_total else ""
+        # Montant HT = somme du tableau extrait, stocke en float (pas str) pour Excel
+        c.montant_ht = float(table_data.montant_ht_total) if table_data.montant_ht_total else ""
         c.nom_entreprise = table_data.nom_entreprise if table_data.nom_entreprise else ""
         c.taux_tva = table_data.taux_tva if table_data.taux_tva else ""
         c.nature_travaux = table_data.nature_travaux if table_data.nature_travaux else ""
-        c.montant_ttc = table_data.montant_ttc_total if table_data.montant_ttc_total else ""
+        # Montant TTC = somme du tableau extrait (float pour format Excel)
+        c.montant_ttc = float(table_data.montant_ttc_total) if table_data.montant_ttc_total else ""
+        c.montant_ttc_check_ok = table_data.montant_ttc_check_ok
         c.montant_subvention = table_data.montant_subvention if table_data.montant_subvention else ""
     else:
         c.montant_ht = ""
@@ -240,12 +246,16 @@ def compute_metadata(
         c.ref_avis = table_data.references_avis
     else:
         c.ref_avis = raw.ref_avis_imposition.strip()
+    # Supprime les espaces a l'interieur de chaque reference (ex: "24 80 4122964 12" -> "2480412296412")
+    c.ref_avis = ";".join(part.replace(" ", "") for part in c.ref_avis.split(";"))
 
     # Adresse : tableau prioritaire (plus fiable), sinon texte courrier
     if table_data and table_data.adresse:
         c.adresse = table_data.adresse
     else:
         c.adresse = raw.adresses
+    # Remplace toutes les apostrophes (droites et typographiques) par un espace
+    c.adresse = c.adresse.replace("\u2019", " ").replace("'", " ")
 
     try:
         c.nombre_logements = int(raw.nombre_logements) if raw.nombre_logements else 0
@@ -266,7 +276,8 @@ def compute_metadata(
     # Type d'envoi (valeur fixe)
     c.type_envoi = "RecommandeAvecAR"
 
-    c.numero_recommande = raw.numero_lr_ar if raw.numero_lr_ar else raw.numero_lr_depot
+    # Numero de recommande : exclusivement depuis l'AR (accuse de reception)
+    c.numero_recommande = raw.numero_lr_ar
 
     # --- Interlocuteur (valeurs fixes) ---
     c.nom_interlocuteur = "JOUHANNET"
@@ -312,3 +323,11 @@ def computed_metadata_to_rows(c: ComputedMetadata) -> list[tuple[str, object]]:
         ("Nature de depenses", c.nature_depenses),
         ("N° d'operation", c.numero_operation),
     ]
+
+
+def computed_metadata_red_keys(c: ComputedMetadata) -> set[str]:
+    """Retourne l'ensemble des labels de cellules a colorer en rouge (verifications echouees)."""
+    red: set[str] = set()
+    if not c.montant_ttc_check_ok:
+        red.add("Montant TTC")
+    return red

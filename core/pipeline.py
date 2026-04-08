@@ -33,6 +33,7 @@ from .metadata import (
     ComputedMetadata,
     build_raw_metadata,
     compute_metadata,
+    computed_metadata_red_keys,
     computed_metadata_to_rows,
     detect_pdf_type,
     extract_metadata,
@@ -109,7 +110,8 @@ def _build_metadata_excel_computed(computed: ComputedMetadata) -> bytes:
     wb.remove(wb.active)
     ws = wb.create_sheet(title="Métadonnées")
     meta_rows = computed_metadata_to_rows(computed)
-    write_metadata_sheet(ws, meta_rows)
+    red_keys = computed_metadata_red_keys(computed)
+    write_metadata_sheet(ws, meta_rows, red_keys=red_keys)
     buf = io.BytesIO()
     wb.save(buf)
     buf.seek(0)
@@ -351,9 +353,11 @@ def _build_recapitulatif_excel(results: list[DemandeResult]) -> bytes:
 
     # Collecter les rows de chaque demande
     all_rows = []
+    all_red_keys: list[set[str]] = []
     for r in results:
         meta_rows = computed_metadata_to_rows(r.computed_metadata)
         all_rows.append(meta_rows)
+        all_red_keys.append(computed_metadata_red_keys(r.computed_metadata))
 
     if not all_rows:
         buf = io.BytesIO()
@@ -371,7 +375,8 @@ def _build_recapitulatif_excel(results: list[DemandeResult]) -> bytes:
         cell.border = THIN_BORDER
 
     # Données (une ligne par demande)
-    for row_num, meta_rows in enumerate(all_rows, start=2):
+    from .excel_writer import META_VAL_RED_FONT, META_VAL_RED_FILL
+    for row_num, (meta_rows, red_keys) in enumerate(zip(all_rows, all_red_keys), start=2):
         for col_idx, (key, value) in enumerate(meta_rows, start=1):
             if value is None or value == "":
                 cell = ws.cell(row=row_num, column=col_idx, value=None)
@@ -379,7 +384,11 @@ def _build_recapitulatif_excel(results: list[DemandeResult]) -> bytes:
                 cell = ws.cell(row=row_num, column=col_idx, value=value)
                 if isinstance(value, float):
                     cell.number_format = EURO_FORMAT
-            cell.font = META_VAL_FONT
+            if key in red_keys:
+                cell.font = META_VAL_RED_FONT
+                cell.fill = META_VAL_RED_FILL
+            else:
+                cell.font = META_VAL_FONT
             cell.alignment = CELL_ALIGNMENT
             cell.border = THIN_BORDER
 

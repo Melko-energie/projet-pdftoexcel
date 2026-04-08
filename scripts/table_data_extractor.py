@@ -157,6 +157,23 @@ def _extract_cell_str(row, col_idx) -> str:
     return str(val).strip()
 
 
+def _parse_tva_rate(value) -> float:
+    """Retourne le taux TVA en decimal (ex: 0.20 pour '20%'). 0.0 si invalide."""
+    if value is None:
+        return 0.0
+    if isinstance(value, (int, float)):
+        v = float(value)
+        return v if v < 1 else v / 100
+    text = str(value).strip().replace("%", "").replace(",", ".").replace(" ", "")
+    if not text:
+        return 0.0
+    try:
+        v = float(text)
+        return v if v < 1 else v / 100
+    except ValueError:
+        return 0.0
+
+
 def _parse_taux_tva(value) -> str:
     """Extrait le taux de TVA d'une cellule. Ex: '20', '20%', 0.2 -> '20%'."""
     if value is None:
@@ -191,6 +208,8 @@ class TableExtractedData:
     montant_ht_total: str = ""      # somme de "Montant HT facture"
     taux_tva: str = ""              # valeurs uniques de "Taux de TVA facture" jointes par ";"
     montant_ttc_total: str = ""     # somme de "Montant TTC facture"
+    montant_ttc_recalcule: float = 0.0  # somme recalculee HT*(1+TVA) par ligne
+    montant_ttc_check_ok: bool = True   # True si TTC sommes coherent avec HT*(1+TVA)
     montant_subvention: str = ""    # somme de "Montant subventions encaisses"
     nature_travaux: str = ""        # valeurs uniques de "NATURE DES TRAVAUX" jointes par ";"
     nom_entreprise: str = ""        # valeurs uniques de "Installateur" jointes par ";"
@@ -213,6 +232,7 @@ def extract_from_datasets(datasets: list) -> TableExtractedData:
     total_degrevement = 0.0
     total_ht = 0.0
     total_ttc = 0.0
+    total_ttc_recalc = 0.0
     total_subvention = 0.0
     all_natures: set[str] = set()
     all_installateurs: set[str] = set()
@@ -246,10 +266,14 @@ def extract_from_datasets(datasets: list) -> TableExtractedData:
         )
 
         for row in ds.data_rows:
-            # References avis
+            # References avis : uniquement chiffres+espaces, exactement 13 chiffres
+            # (format canonique : AA NN NNNNNNN NN, ex: "24 80 4122964 12")
+            # Rejette les valeurs corrompues par fusion de colonnes en PDF (ex: "OL2L4IN 80 4122964 12")
             val = _extract_cell_str(row, idx_ref)
-            if val and is_valid_value(val, min_length=5):
-                all_ref_avis.add(val)
+            if val and re.fullmatch(r"[\d\s]+", val):
+                digits = re.sub(r"\s", "", val)
+                if len(digits) == 13:
+                    all_ref_avis.add(digits)
 
             # Programme
             val = _extract_cell_str(row, idx_prog)
@@ -271,12 +295,19 @@ def extract_from_datasets(datasets: list) -> TableExtractedData:
                 total_degrevement += parse_montant_cell(row[idx_deg])
 
             # Montant HT (somme)
+            ht_val = 0.0
             if idx_ht is not None and idx_ht < len(row):
-                total_ht += parse_montant_cell(row[idx_ht])
+                ht_val = parse_montant_cell(row[idx_ht])
+                total_ht += ht_val
 
             # Montant TTC (somme)
             if idx_ttc is not None and idx_ttc < len(row):
                 total_ttc += parse_montant_cell(row[idx_ttc])
+
+            # Recalcul TTC = HT * (1 + TVA) par ligne (pour verification)
+            if idx_tva is not None and idx_tva < len(row) and ht_val > 0:
+                tva_rate = _parse_tva_rate(row[idx_tva])
+                total_ttc_recalc += ht_val * (1 + tva_rate)
 
             # Montant subvention (somme)
             if idx_sub is not None and idx_sub < len(row):
@@ -303,6 +334,10 @@ def extract_from_datasets(datasets: list) -> TableExtractedData:
             if val:
                 all_operations.add(val)
 
+    # Verification TTC : tolerance 1 euro ou 0.5% relatif
+    tolerance = max(1.0, total_ttc * 0.005)
+    ttc_ok = abs(total_ttc - total_ttc_recalc) <= tolerance if total_ttc > 0 else True
+
     return TableExtractedData(
         references_avis=";".join(sorted(all_ref_avis)),
         numero_programme=", ".join(sorted(all_programmes)),
@@ -312,6 +347,8 @@ def extract_from_datasets(datasets: list) -> TableExtractedData:
         montant_ht_total=f"{total_ht:.2f}" if total_ht > 0 else "",
         taux_tva=";".join(sorted(all_taux_tva)),
         montant_ttc_total=f"{total_ttc:.2f}" if total_ttc > 0 else "",
+        montant_ttc_recalcule=total_ttc_recalc,
+        montant_ttc_check_ok=ttc_ok,
         montant_subvention=f"{total_subvention:.2f}" if total_subvention > 0 else "",
         nature_travaux=";".join(sorted(all_natures)),
         nom_entreprise=";".join(sorted(all_installateurs)),

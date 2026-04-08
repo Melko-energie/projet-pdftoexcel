@@ -39,6 +39,8 @@ DATE_FORMAT = 'DD/MM/YYYY'
 META_KEY_FILL = PatternFill(start_color="D6E4F0", end_color="D6E4F0", fill_type="solid")
 META_KEY_FONT = Font(name="Calibri", size=11, bold=True)
 META_VAL_FONT = Font(name="Calibri", size=11)
+META_VAL_RED_FONT = Font(name="Calibri", size=11, color="C00000", bold=True)
+META_VAL_RED_FILL = PatternFill(start_color="FCE4E4", end_color="FCE4E4", fill_type="solid")
 
 
 def _sanitize_sheet_name(name: str) -> str:
@@ -131,7 +133,11 @@ def write_dataset_to_sheet(ws, dataset: Dataset) -> None:
         ws.auto_filter.ref = f"A1:{last_col}{current_row - 1}"
 
 
-def write_metadata_sheet(ws, metadata_rows: list[tuple[str, object]]) -> None:
+def write_metadata_sheet(
+    ws,
+    metadata_rows: list[tuple[str, object]],
+    red_keys: set[str] | None = None,
+) -> None:
     """Écrit une feuille de métadonnées en disposition horizontale.
 
     Ligne 1 : noms des champs (headers).
@@ -141,7 +147,10 @@ def write_metadata_sheet(ws, metadata_rows: list[tuple[str, object]]) -> None:
         ws: Feuille openpyxl.
         metadata_rows: Liste de tuples (clé, valeur). Les valeurs float
             reçoivent le format euro.
+        red_keys: Ensemble de clés dont la cellule valeur doit être colorée en rouge
+            (verifications échouées).
     """
+    red_keys = red_keys or set()
     # Ligne 1 : noms des champs (headers horizontaux)
     for col_idx, (key, _value) in enumerate(metadata_rows, start=1):
         cell = ws.cell(row=1, column=col_idx, value=key)
@@ -159,7 +168,11 @@ def write_metadata_sheet(ws, metadata_rows: list[tuple[str, object]]) -> None:
             val_cell = ws.cell(row=2, column=col_idx, value=value)
             if isinstance(value, float):
                 val_cell.number_format = EURO_FORMAT
-        val_cell.font = META_VAL_FONT
+        if key in red_keys:
+            val_cell.font = META_VAL_RED_FONT
+            val_cell.fill = META_VAL_RED_FILL
+        else:
+            val_cell.font = META_VAL_FONT
         val_cell.alignment = CELL_ALIGNMENT
         val_cell.border = THIN_BORDER
 
