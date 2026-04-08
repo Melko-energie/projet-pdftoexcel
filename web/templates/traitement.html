@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Traitement en cours — PDF Table Extractor{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-12">
+  <!-- Status Header -->
+  <div class="space-y-2">
+    <div class="flex items-center gap-2 text-primary font-bold tracking-wide uppercase text-xs font-label">
+      <span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+      Traitement actif
+    </div>
+    <h2 id="progress-title" class="text-3xl font-extrabold text-on-surface font-headline leading-tight">Préparation…</h2>
+    <p id="progress-subtitle" class="text-on-surface-variant font-body">Analyse des structures et extraction des métadonnées en cours.</p>
+  </div>
+
+  <!-- Progress Card -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="md:col-span-2 bg-surface-container-lowest rounded-xl p-8 shadow-xl shadow-slate-900/5 flex flex-col justify-between min-h-[280px] relative overflow-hidden">
+      <div class="space-y-6">
+        <div class="flex justify-between items-end">
+          <span class="text-5xl font-extrabold text-primary font-headline"><span id="progress-percent">0</span><span class="text-2xl">%</span></span>
+          <span id="progress-counter" class="text-on-surface-variant font-label text-sm">0 sur 0 dossiers</span>
+        </div>
+        <div class="relative w-full h-4 bg-surface-container-highest rounded-full overflow-hidden">
+          <div id="progress-bar" class="absolute top-0 left-0 h-full bg-gradient-to-r from-primary to-primary-container rounded-full transition-all duration-500" style="width: 0%">
+            <div class="absolute inset-0 loading-shimmer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="pt-8 border-t border-outline-variant/10">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-surface-container-low flex items-center justify-center">
+            <span class="material-symbols-outlined text-primary">description</span>
+          </div>
+          <div>
+            <p id="current-prefix" class="text-sm font-bold text-on-surface">—</p>
+            <p id="current-message" class="text-xs text-on-surface-variant">En attente…</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Side info -->
+    <div class="space-y-6">
+      <div class="bg-surface-container-low rounded-xl p-6">
+        <p class="text-xs font-bold text-outline uppercase tracking-widest mb-2 font-label">Job ID</p>
+        <p class="text-sm font-mono text-on-surface">{{ state.job_id }}</p>
+      </div>
+      <div class="bg-surface-container-low rounded-xl p-6">
+        <p class="text-xs font-bold text-outline uppercase tracking-widest mb-2 font-label">Documents</p>
+        <p class="text-2xl font-bold text-on-surface font-headline">{{ state.pdf_count }} <span class="text-sm font-medium text-on-surface-variant">PDF</span></p>
+      </div>
+      <div id="done-card" class="bg-tertiary-container/10 border border-tertiary-container/20 rounded-xl p-6 opacity-40 transition-opacity">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="material-symbols-outlined text-tertiary text-sm">check_circle</span>
+          <p class="text-xs font-bold text-tertiary uppercase tracking-widest font-label">Prêt pour revue</p>
+        </div>
+        <p class="text-sm font-medium text-on-tertiary-container">Extraction terminée.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Log -->
+  <div class="bg-surface-container-low rounded-2xl p-1 overflow-hidden">
+    <div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm">
+      <h3 class="text-sm font-bold text-on-surface mb-4 flex items-center gap-2">
+        <span class="material-symbols-outlined text-sm">terminal</span>
+        Journal d'extraction
+      </h3>
+      <div id="log-container" class="space-y-2 font-body text-sm max-h-64 overflow-y-auto">
+        <div class="flex gap-4 items-start">
+          <span class="text-outline-variant font-medium shrink-0">--:--:--</span>
+          <p class="text-on-surface-variant"><span class="text-primary font-bold">INFO :</span> En attente du premier message…</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex justify-end gap-4 pt-4">
+    <a href="/" class="px-6 py-3 rounded-xl bg-surface-container-high text-on-surface-variant font-bold font-label hover:bg-surface-dim transition-all">
+      Annuler
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const JOB_ID = {{ state.job_id|tojson }};
+</script>
+<script src="/static/js/traitement.js"></script>
+{% endblock %}

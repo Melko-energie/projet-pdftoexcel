@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Résultats — PDF Table Extractor{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-8">
+  <!-- Header -->
+  <section>
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-tertiary-container/10 text-tertiary font-label text-xs font-bold uppercase tracking-widest mb-2">
+      <span class="material-symbols-outlined text-sm">check_circle</span>
+      Extraction terminée
+    </div>
+    <h2 class="text-3xl font-extrabold text-on-surface tracking-tight font-headline">Résultats</h2>
+    <p class="text-on-surface-variant text-lg font-body">Les fichiers sont prêts à être téléchargés.</p>
+  </section>
+
+  <!-- Metrics -->
+  <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="bg-surface-container-lowest p-8 rounded-xl shadow-sm border border-outline-variant/10 hover:bg-surface-bright transition-colors group">
+      <div class="flex justify-between items-start mb-4">
+        <span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">description</span>
+        <span class="text-xs font-bold tracking-widest text-outline uppercase font-label">Total</span>
+      </div>
+      <div class="text-4xl font-extrabold text-on-surface font-body mb-1">{{ state.total_demandes }}</div>
+      <div class="text-sm font-medium text-on-surface-variant font-label">Demandes traitées</div>
+    </div>
+    <div class="bg-surface-container-lowest p-8 rounded-xl shadow-sm border border-outline-variant/10 hover:bg-surface-bright transition-colors group">
+      <div class="flex justify-between items-start mb-4">
+        <span class="material-symbols-outlined text-tertiary-container group-hover:scale-110 transition-transform">data_table</span>
+        <span class="text-xs font-bold tracking-widest text-outline uppercase font-label">Structuré</span>
+      </div>
+      <div class="text-4xl font-extrabold text-on-surface font-body mb-1">{{ state.avec_tableau }}</div>
+      <div class="text-sm font-medium text-on-surface-variant font-label">Avec tableau</div>
+    </div>
+    <div class="bg-surface-container-lowest p-8 rounded-xl shadow-sm border border-outline-variant/10 hover:bg-surface-bright transition-colors group">
+      <div class="flex justify-between items-start mb-4">
+        <span class="material-symbols-outlined text-secondary group-hover:scale-110 transition-transform">subject</span>
+        <span class="text-xs font-bold tracking-widest text-outline uppercase font-label">Narratif</span>
+      </div>
+      <div class="text-4xl font-extrabold text-on-surface font-body mb-1">{{ state.sans_tableau }}</div>
+      <div class="text-sm font-medium text-on-surface-variant font-label">Sans tableau</div>
+    </div>
+  </section>
+
+  <!-- Errors -->
+  {% if state.errors %}
+  <section class="bg-error-container/40 rounded-xl p-6 border-l-4 border-error">
+    <h3 class="font-bold text-on-error-container mb-3 flex items-center gap-2">
+      <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">error</span>
+      Avertissements ({{ state.errors|length }})
+    </h3>
+    <ul class="space-y-2 text-sm text-on-error-container/80">
+      {% for e in state.errors %}
+      <li class="flex gap-2"><span>•</span><span>{{ e }}</span></li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  <!-- Table -->
+  <section class="bg-surface-container-lowest rounded-2xl overflow-hidden border border-outline-variant/5 shadow-xl shadow-slate-900/[0.02]">
+    <div class="px-8 py-6 flex justify-between items-center border-b border-surface-container-low">
+      <h2 class="text-lg font-bold text-on-surface font-headline">Récapitulatif des extractions</h2>
+      <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-primary-container/10 text-primary uppercase tracking-tighter">Job {{ state.job_id }}</span>
+    </div>
+    {% if state.results_rows %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-surface-container-low/50">
+            <th class="px-8 py-4 text-xs font-bold text-outline uppercase tracking-wider font-label">N°</th>
+            <th class="px-8 py-4 text-xs font-bold text-outline uppercase tracking-wider font-label">Libellé</th>
+            <th class="px-8 py-4 text-xs font-bold text-outline uppercase tracking-wider font-label text-center">Statut</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-surface-container-low">
+          {% for row in state.results_rows %}
+          <tr class="hover:bg-surface-container-low/30 transition-colors">
+            <td class="px-8 py-5 text-sm font-medium text-on-surface-variant">{{ row.prefix }}</td>
+            <td class="px-8 py-5 text-sm font-semibold text-on-surface">{{ row.libelle or "—" }}</td>
+            <td class="px-8 py-5 text-center">
+              {% if row.statut == "Annexe" %}
+              <span class="px-3 py-1 rounded-full text-[11px] font-bold bg-tertiary-fixed text-on-tertiary-fixed-variant uppercase tracking-wide">{{ row.statut }}</span>
+              {% else %}
+              <span class="px-3 py-1 rounded-full text-[11px] font-bold bg-secondary-container text-on-secondary-container uppercase tracking-wide">{{ row.statut }}</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="p-12 text-center text-on-surface-variant">
+      <span class="material-symbols-outlined text-5xl text-outline mb-4">inbox</span>
+      <p>Aucune demande traitée.</p>
+    </div>
+    {% endif %}
+  </section>
+
+  <!-- Actions -->
+  <section class="flex flex-col md:flex-row items-center justify-between gap-6 pt-4">
+    <div class="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+      <a href="/download/{{ state.job_id }}" class="flex items-center justify-center gap-3 px-8 py-4 bg-gradient-primary text-on-primary rounded-xl font-bold transition-all hover:shadow-lg hover:shadow-primary/20 active:scale-95">
+        <span class="material-symbols-outlined">download</span>
+        Télécharger le dossier structuré (.zip)
+      </a>
+      <a href="/" class="flex items-center justify-center gap-3 px-8 py-4 bg-surface-container-high text-on-surface rounded-xl font-bold transition-all hover:bg-surface-dim active:scale-95">
+        <span class="material-symbols-outlined">refresh</span>
+        Nouveau courrier
+      </a>
+    </div>
+    <div class="flex items-center gap-2 text-outline-variant">
+      <span class="w-2 h-2 rounded-full bg-tertiary-container animate-pulse"></span>
+      <span class="text-xs font-bold uppercase tracking-widest font-label">Système opérationnel</span>
+    </div>
+  </section>
+</div>
+{% endblock %}
