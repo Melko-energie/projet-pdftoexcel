@@ -72,7 +72,14 @@ def _apply_abbreviations(addr: str) -> str:
     consumed = [False] * len(addr)
     replacements: list[tuple[int, int, str]] = []
     for key_norm, val in _ABBREVIATIONS:
-        pattern = re.compile(r"\b" + re.escape(key_norm) + r"\b")
+        # Frontiere a gauche/droite : si la cle commence/finit par un caractere
+        # "mot" (alphanumerique), on exige qu'il n'y ait pas d'autre caractere
+        # "mot" colle (equivalent a \b). Sinon (cle finissant par '.', '-', etc.),
+        # on n'exige rien : sans cela, \b ne match jamais une cle terminee par
+        # un signe de ponctuation (ex: "AV.").
+        left = r"(?<!\w)" if key_norm[:1].isalnum() else r""
+        right = r"(?!\w)" if key_norm[-1:].isalnum() else r""
+        pattern = re.compile(left + re.escape(key_norm) + right)
         for m in pattern.finditer(norm):
             s, e = m.start(), m.end()
             if any(consumed[s:e]):
@@ -408,14 +415,9 @@ def compute_metadata(
     c.numero_operation = table_data.n_operation if table_data else ""
 
     # --- Envoi ---
-    # Date limite = 31/12 de l'annee suivant l'annee fiscale
-    if raw.annee_fiscale:
-        try:
-            c.date_limite_envoi = f"31/12/{int(raw.annee_fiscale) + 2}"
-        except ValueError:
-            c.date_limite_envoi = format_date_fr(raw.date_limite_envoi)
-    else:
-        c.date_limite_envoi = format_date_fr(raw.date_limite_envoi)
+    # Date limite = date extraite de "Fait a Paris, le ..." dans le courrier,
+    # convertie au format dd/mm/yyyy. (anciennement hardcode a 31/12/annee_fiscale+2)
+    c.date_limite_envoi = format_date_fr(raw.date_courrier)
 
     # Type d'envoi (valeur fixe)
     c.type_envoi = "RecommandeAvecAR"
@@ -472,6 +474,8 @@ def computed_metadata_to_rows(c: ComputedMetadata) -> list[tuple[str, object]]:
 def computed_metadata_red_keys(c: ComputedMetadata) -> set[str]:
     """Retourne l'ensemble des labels de cellules a colorer en rouge (verifications echouees)."""
     red: set[str] = set()
-    if not c.montant_ttc_check_ok:
-        red.add("Montant TTC")
+    # Verification "Montant TTC" desactivee : la cellule n'est plus colorisee en
+    # rouge meme si la somme recalculee differe de la colonne TTC du PDF.
+    # (Le flag c.montant_ttc_check_ok continue d'etre calcule en amont mais
+    # n'est plus utilise pour la coloration.)
     return red

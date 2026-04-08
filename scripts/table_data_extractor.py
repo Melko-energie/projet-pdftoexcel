@@ -313,8 +313,10 @@ def extract_from_datasets(datasets: list) -> TableExtractedData:
             if idx_sub is not None and idx_sub < len(row):
                 total_subvention += parse_montant_cell(row[idx_sub])
 
-            # Taux TVA (valeurs uniques)
-            if idx_tva is not None and idx_tva < len(row) and not all_taux_tva:
+            # Taux TVA (valeurs uniques) : collecte tous les taux distincts
+            # rencontres dans l'annexe (plusieurs factures peuvent avoir des taux
+            # differents, ex: 5,5% + 20%). La jointure par ";" est faite a la fin.
+            if idx_tva is not None and idx_tva < len(row):
                 parsed = _parse_taux_tva(row[idx_tva])
                 if parsed:
                     all_taux_tva.add(parsed)
@@ -346,7 +348,11 @@ def extract_from_datasets(datasets: list) -> TableExtractedData:
         montant_degrevement=total_degrevement,
         montant_ht_total=f"{total_ht:.2f}" if total_ht > 0 else "",
         taux_tva=";".join(sorted(all_taux_tva)),
-        montant_ttc_total=f"{total_ttc:.2f}" if total_ttc > 0 else "",
+        # Montant TTC : recalcule ligne par ligne comme Σ HT × (1 + TVA).
+        # La somme directe de la colonne "Montant TTC facture" (total_ttc) reste
+        # calculee plus haut et sert uniquement a la verification (cellule rouge
+        # si ecart > tolerance, cf. ttc_ok ci-dessus).
+        montant_ttc_total=f"{total_ttc_recalc:.2f}" if total_ttc_recalc > 0 else "",
         montant_ttc_recalcule=total_ttc_recalc,
         montant_ttc_check_ok=ttc_ok,
         montant_subvention=f"{total_subvention:.2f}" if total_subvention > 0 else "",
