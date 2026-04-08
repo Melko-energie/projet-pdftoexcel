@@ -97,7 +97,7 @@ PATTERN_MONTANT_SUBVENTION = re.compile(
 
 # --- Patterns AR et depot ---
 
-PATTERN_NUM_LR = re.compile(r"(\d{13,14}[A-Za-z])")
+PATTERN_NUM_LR = re.compile(r"(\d{13,14}[A-Za-z]|\d{15})")
 PATTERN_DATE_DDMMYYYY = re.compile(r"(\d{2}/\d{2}/\d{4})")
 PATTERN_PRESENTATION_AR = re.compile(
     r"(?:Pr[ée]sent[ée]e|avis[ée]e)\s+(?:le\s+)?(\d{1,2}/\d{1,2}/\d{4})",
