@@ -28,22 +28,29 @@ def _search(pattern: re.Pattern, text: str, group: int = 1) -> str:
     return ""
 
 
-def _extract_all_text(pdf_bytes: bytes) -> str:
-    """Extrait le texte de toutes les pages d'un PDF depuis des bytes."""
+def _extract_all_text(pdf_bytes: bytes) -> tuple[str, str]:
+    """Extrait le texte de toutes les pages d'un PDF depuis des bytes.
+
+    Returns:
+        (full_text, text_page1) — texte complet et texte de la page 1.
+    """
     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
     try:
         tmp.write(pdf_bytes)
         tmp.close()
         with pdfplumber.open(tmp.name) as pdf:
             pages_text = []
-            for page in pdf.pages:
+            text_page1 = ""
+            for i, page in enumerate(pdf.pages):
                 t = page.extract_text()
                 if t:
                     pages_text.append(t)
-            return "\n".join(pages_text)
+                    if i == 0:
+                        text_page1 = t
+            return "\n".join(pages_text), text_page1
     except Exception as e:
         logger.warning("Impossible de lire le PDF : %s", e)
-        return ""
+        return "", ""
     finally:
         Path(tmp.name).unlink(missing_ok=True)
 
@@ -87,6 +94,8 @@ class RawMetadata:
 
     # Texte complet du courrier (pour classification)
     full_text: str = ""
+    # Texte brut de la page 1 (pour detection commune)
+    text_page1: str = ""
 
     # Depuis la preuve de depot
     numero_lr_depot: str = ""
@@ -135,12 +144,13 @@ def extract_conditional_fields(text: str) -> dict:
 
 def extract_raw_from_courrier(pdf_bytes: bytes) -> dict:
     """Extrait toutes les donnees brutes du courrier PDF."""
-    text = _extract_all_text(pdf_bytes)
+    text, text_page1 = _extract_all_text(pdf_bytes)
     if not text:
         return {}
 
     result = {}
     result["full_text"] = text
+    result["text_page1"] = text_page1
 
     result["numero_demande"] = _search(P.PATTERN_NUM_DEMANDE, text)
 
@@ -218,7 +228,7 @@ def extract_raw_from_courrier(pdf_bytes: bytes) -> dict:
 
 def extract_raw_from_ar(pdf_bytes: bytes) -> dict:
     """Extrait N LR, dates, receptionnaire depuis l'AR."""
-    text = _extract_all_text(pdf_bytes)
+    text, _ = _extract_all_text(pdf_bytes)
     if not text:
         return {}
 
@@ -233,7 +243,7 @@ def extract_raw_from_ar(pdf_bytes: bytes) -> dict:
 
 def extract_raw_from_depot(pdf_bytes: bytes) -> dict:
     """Extrait N LR, date depuis la preuve de depot."""
-    text = _extract_all_text(pdf_bytes)
+    text, _ = _extract_all_text(pdf_bytes)
     if not text:
         return {}
 
@@ -258,6 +268,7 @@ def build_raw_metadata(
     if courrier_bytes:
         data = extract_raw_from_courrier(courrier_bytes)
         raw.full_text = data.get("full_text", "")
+        raw.text_page1 = data.get("text_page1", "")
         raw.numero_demande = data.get("numero_demande", "")
         raw.annee_fiscale = data.get("annee_fiscale", "")
         raw.objet_complet = data.get("objet_complet", "")

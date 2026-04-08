@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Validation du Dépôt - Precision Editorial</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-error-container": "#93000a",
+                    "primary-container": "#004b87",
+                    "on-error": "#ffffff",
+                    "on-tertiary-fixed": "#002204",
+                    "inverse-surface": "#2e3132",
+                    "on-tertiary-fixed-variant": "#005312",
+                    "inverse-primary": "#a3c9ff",
+                    "on-surface": "#191c1d",
+                    "tertiary-fixed": "#a3f69c",
+                    "surface-bright": "#f8f9fa",
+                    "on-primary": "#ffffff",
+                    "primary-fixed-dim": "#a3c9ff",
+                    "secondary-fixed": "#d5e4f5",
+                    "on-primary-fixed-variant": "#004882",
+                    "primary": "#003461",
+                    "secondary": "#51606e",
+                    "primary-fixed": "#d3e4ff",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-tint": "#27609d",
+                    "surface-container-high": "#e7e8e9",
+                    "on-background": "#191c1d",
+                    "on-secondary-fixed-variant": "#3a4856",
+                    "on-secondary-fixed": "#0e1d29",
+                    "on-secondary": "#ffffff",
+                    "tertiary": "#003c0a",
+                    "tertiary-fixed-dim": "#88d982",
+                    "on-primary-container": "#8abcff",
+                    "inverse-on-surface": "#f0f1f2",
+                    "tertiary-container": "#005613",
+                    "on-tertiary-container": "#7acb76",
+                    "surface-variant": "#e1e3e4",
+                    "on-primary-fixed": "#001c38",
+                    "secondary-fixed-dim": "#b9c8d8",
+                    "outline": "#727781",
+                    "surface": "#f8f9fa",
+                    "on-tertiary": "#ffffff",
+                    "outline-variant": "#c2c6d1",
+                    "on-surface-variant": "#424750",
+                    "error-container": "#ffdad6",
+                    "on-secondary-container": "#556472",
+                    "secondary-container": "#d2e1f2",
+                    "surface-container": "#edeeef",
+                    "surface-dim": "#d9dadb",
+                    "surface-container-low": "#f3f4f5",
+                    "background": "#f8f9fa",
+                    "surface-container-highest": "#e1e3e4",
+                    "error": "#ba1a1a"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        }
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3 { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .bg-gradient-primary {
+            background: linear-gradient(to bottom right, #003461, #004b87);
+        }
+        .ambient-shadow {
+            box-shadow: 0 8px 32px rgba(25, 28, 29, 0.05);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface">
+<!-- TopAppBar -->
+<header class="bg-[#f8f9fa] dark:bg-slate-950 flex justify-between items-center w-full px-6 py-4 fixed top-0 z-50">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-[#003461] dark:text-blue-400">menu</span>
+<h1 class="text-xl font-bold tracking-tight text-[#191c1d] dark:text-slate-100">Precision Editorial</h1>
+</div>
+<div class="flex items-center gap-6">
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-[#003461] font-bold transition-colors" href="#">Dépôt</a>
+<a class="text-[#424750] hover:bg-[#e7e8e9] transition-colors px-2 py-1 rounded" href="#">Historique</a>
+<a class="text-[#424750] hover:bg-[#e7e8e9] transition-colors px-2 py-1 rounded" href="#">Rapports</a>
+</nav>
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center overflow-hidden border border-outline-variant/20">
+<img alt="User profile" data-alt="professional male portrait in office attire with soft natural lighting and neutral background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC1x5oBK3uhKwxeLE3UfCaEVtF_KPUlIKXSrZbfTOtYDI1QSsX8ivqppyZEvD6jhZJNllZOzFQ29Z4BhgYKpZgwT-4Xse_-i1X8BtI5POt9lCfLF5iAh2WsP6PaGlsF8S6n72SJ0W02-EH7zMrJwsioKqFHwWIa229JzHfhUicl8uboA7zwamYqM-1fxoWVtJoj9Wf7b0_XLoRCmW_yfcsVxbD-WSL6M9931lKmpaXHrmHGg10trhaTwA4zn53COcYHumDgeDqfggF_"/>
+</div>
+</div>
+</header>
+<!-- NavigationDrawer (Desktop Only) -->
+<aside class="hidden lg:flex fixed left-0 top-0 h-full z-40 w-72 flex-col p-4 gap-2 bg-[#f3f4f5] dark:bg-slate-900 pt-24">
+<div class="px-4 mb-4">
+<span class="text-sm font-bold text-[#003461] dark:text-blue-400 uppercase tracking-widest">Navigation</span>
+</div>
+<a class="flex items-center gap-4 p-3 bg-[#ffffff] dark:bg-slate-800 text-[#003461] dark:text-blue-300 rounded-lg shadow-sm transition-all duration-300 ease-out" href="#">
+<span class="material-symbols-outlined">add_circle</span>
+<span class="font-medium">Nouveau courrier</span>
+</a>
+<a class="flex items-center gap-4 p-3 text-[#424750] dark:text-slate-400 hover:bg-[#e7e8e9] dark:hover:bg-slate-700 rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">table_chart</span>
+<span class="font-medium">Extractions</span>
+</a>
+<a class="flex items-center gap-4 p-3 text-[#424750] dark:text-slate-400 hover:bg-[#e7e8e9] dark:hover:bg-slate-700 rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-medium">Archives</span>
+</a>
+<a class="flex items-center gap-4 p-3 text-[#424750] dark:text-slate-400 hover:bg-[#e7e8e9] dark:hover:bg-slate-700 rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-medium">Paramètres</span>
+</a>
+</aside>
+<!-- Main Content -->
+<main class="lg:ml-72 pt-24 pb-32 px-6 md:px-12 max-w-6xl mx-auto">
+<!-- Header Section -->
+<section class="mb-12">
+<h2 class="text-3xl font-extrabold text-on-surface mb-2 tracking-tight">Validation du dépôt</h2>
+<p class="text-on-surface-variant text-lg">Vérifiez l'intégrité de vos documents avant de lancer l'analyse automatisée.</p>
+</section>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+<!-- Left Column: Summary & Validation -->
+<div class="md:col-span-2 space-y-8">
+<!-- Deposit Summary Card -->
+<div class="bg-surface-container-lowest p-8 rounded-xl ambient-shadow">
+<div class="flex items-center justify-between mb-8">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-primary-fixed flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">folder_zip</span>
+</div>
+<div>
+<h3 class="text-xl font-bold text-on-surface">📦 3 archives ZIP</h3>
+<p class="text-sm text-outline">Traitement par lot identifié</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-2xl font-bold text-on-surface">12</p>
+<p class="text-xs text-outline uppercase tracking-widest font-bold">courriers déposés</p>
+</div>
+</div>
+<!-- Files Table Minimalist -->
+<div class="space-y-3">
+<div class="flex items-center justify-between p-4 bg-surface-container-low rounded-lg">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline">description</span>
+<span class="font-medium text-on-surface-variant">Q4_Fiscal_Audit.zip</span>
+</div>
+<span class="text-sm text-outline">14.2 MB</span>
+</div>
+<div class="flex items-center justify-between p-4 bg-surface-container-low rounded-lg">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline">description</span>
+<span class="font-medium text-on-surface-variant">Tax_Report_2023_Part1.zip</span>
+</div>
+<span class="text-sm text-outline">68.5 MB</span>
+</div>
+<div class="flex items-center justify-between p-4 bg-surface-container-low rounded-lg">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline">description</span>
+<span class="font-medium text-on-surface-variant">Invoices_Dec_Batch.zip</span>
+</div>
+<span class="text-sm text-outline">5.1 MB</span>
+</div>
+</div>
+</div>
+<!-- Alert Section: Asymmetric Grid -->
+<div class="space-y-4">
+<h4 class="text-xs font-bold text-outline uppercase tracking-[0.2em] px-1">Alertes de conformité</h4>
+<!-- Error Alert -->
+<div class="flex gap-4 p-6 bg-error-container/40 rounded-xl border-l-4 border-error">
+<span class="material-symbols-outlined text-error" style="font-variation-settings: 'FILL' 1;">error</span>
+<div class="space-y-1">
+<p class="font-bold text-on-error-container">Erreur critique détectée</p>
+<p class="text-on-error-container/80 text-sm">Le ZIP <span class="font-bold">Invoices_Dec_Batch.zip</span> ne contient aucun PDF valide. Veuillez vérifier l'extension des fichiers.</p>
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<!-- Warning 1 -->
+<div class="flex gap-4 p-5 bg-surface-container-high rounded-xl">
+<span class="material-symbols-outlined text-[#855e00]" style="font-variation-settings: 'FILL' 1;">warning</span>
+<div class="space-y-1">
+<p class="font-bold text-on-surface">Structure atypique</p>
+<p class="text-on-surface-variant text-xs leading-relaxed">Dossiers racines manquants. L'extraction pourrait être incomplète.</p>
+</div>
+</div>
+<!-- Warning 2 -->
+<div class="flex gap-4 p-5 bg-surface-container-high rounded-xl">
+<span class="material-symbols-outlined text-[#855e00]" style="font-variation-settings: 'FILL' 1;">speed</span>
+<div class="space-y-1">
+<p class="font-bold text-on-surface">Fichier volumineux</p>
+<p class="text-on-surface-variant text-xs leading-relaxed">Fichier &gt; 50 MB. Le temps de traitement sera allongé de 5-10 min.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Actions & Meta -->
+<div class="space-y-8">
+<!-- Action Card -->
+<div class="bg-surface-container-low p-8 rounded-xl space-y-6">
+<div class="space-y-2">
+<h4 class="text-lg font-bold text-on-surface">Prêt pour extraction</h4>
+<p class="text-sm text-on-surface-variant">L'IA est configurée pour le modèle fiscal standard v4.2.</p>
+</div>
+<div class="space-y-3">
+<button class="w-full py-4 px-6 bg-gradient-primary text-on-primary rounded-xl font-bold flex items-center justify-center gap-3 active:scale-95 transition-transform">
+<span class="material-symbols-outlined">rocket_launch</span>
+                            Lancer l'extraction
+                        </button>
+<button class="w-full py-4 px-6 bg-surface-container-highest text-on-surface rounded-xl font-bold flex items-center justify-center gap-3 hover:bg-surface-dim transition-colors">
+<span class="material-symbols-outlined">refresh</span>
+                            Nouveau courrier
+                        </button>
+</div>
+<div class="pt-4 border-t border-outline-variant/20">
+<div class="flex items-center gap-2 text-xs text-outline">
+<span class="material-symbols-outlined text-sm">verified_user</span>
+                            Chiffrement AES-256 actif
+                        </div>
+</div>
+</div>
+<!-- Preview Card -->
+<div class="relative group overflow-hidden rounded-xl bg-surface-container-lowest ambient-shadow">
+<img alt="Document Preview" class="w-full h-48 object-cover opacity-80 group-hover:scale-105 transition-transform duration-700" data-alt="close-up of complex financial tax forms and documents on a sleek office desk with architectural depth" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAkL60VHunkNRNyOk863l0Ply5tgy7fhpgjPJzEXRjiP_GwQerey-gyu1inUPvuhU1a2cv8-mu5VKttT__j_nbPTG6rYQS07jQpXv1Wt9XGW5LQiweSEt0lVakp5k3ZQtYjKDPoDy0pg2vcvZhihYkCNx9EaPJQi6E40FRmPvYmuzqvHIhAV8yrhKFnk7W333UpN_2YAeRgOsOUkDbNu6MbRlXAZoMSX2TwRYAuTYkimon1K0F9Qcnh1V9TkqsI81ks1yVqETeJK20h"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-transparent to-transparent"></div>
+<div class="absolute bottom-4 left-4">
+<span class="px-2 py-1 bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-widest rounded">Aperçu visuel</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-safe bg-[#f8f9fa]/80 dark:bg-slate-950/80 backdrop-blur-md shadow-[0_-4px_12px_rgba(0,0,0,0.05)] border-t border-[#c2c6d1]/20">
+<a class="flex flex-col items-center justify-center text-[#003461] dark:text-blue-300 font-bold bg-[#003461]/5 rounded-xl px-4 py-1 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">play_arrow</span>
+<span class="text-[10px] uppercase tracking-wider font-medium">Lancer</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#727781] hover:text-[#003461] active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">download</span>
+<span class="text-[10px] uppercase tracking-wider font-medium">Télécharger</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#727781] hover:text-[#003461] active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">refresh</span>
+<span class="text-[10px] uppercase tracking-wider font-medium">Nouveau</span>
+</a>
+</nav>
+</body></html>

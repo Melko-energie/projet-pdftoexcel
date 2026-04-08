@@ -15,16 +15,25 @@ from pathlib import Path
 from openpyxl import Workbook
 
 from .excel_writer import (
+    CELL_ALIGNMENT,
+    EURO_FORMAT,
+    HEADER_ALIGNMENT,
+    HEADER_FILL,
+    HEADER_FONT,
+    META_VAL_FONT,
+    THIN_BORDER,
     _sanitize_sheet_name,
     write_dataset_to_sheet,
     write_metadata_sheet,
 )
+from openpyxl.utils import get_column_letter
 from .metadata import (
     DossierMetadata,
     RawMetadata,
     ComputedMetadata,
     build_raw_metadata,
     compute_metadata,
+    computed_metadata_red_keys,
     computed_metadata_to_rows,
     detect_pdf_type,
     extract_metadata,
@@ -101,7 +110,8 @@ def _build_metadata_excel_computed(computed: ComputedMetadata) -> bytes:
     wb.remove(wb.active)
     ws = wb.create_sheet(title="Métadonnées")
     meta_rows = computed_metadata_to_rows(computed)
-    write_metadata_sheet(ws, meta_rows)
+    red_keys = computed_metadata_red_keys(computed)
+    write_metadata_sheet(ws, meta_rows, red_keys=red_keys)
     buf = io.BytesIO()
     wb.save(buf)
     buf.seek(0)
@@ -147,7 +157,7 @@ def extract_zip_to_dossiers(zip_bytes: bytes | io.BytesIO) -> list[DemandeDossie
             prefix = _extract_prefix(filename)
 
             if not prefix:
-                logger.warning("Pas de préfixe numérique pour %s, ignoré", filename)
+                logger.warning("Pas de prefixe numerique pour %s, ignore", filename)
                 continue
 
             pdf_data = zf.read(entry)
@@ -174,7 +184,7 @@ def extract_zip_to_dossiers(zip_bytes: bytes | io.BytesIO) -> list[DemandeDossie
                 logger.info("Type inconnu pour %s (prefix %s)", filename, prefix)
 
     result = sorted(dossiers.values(), key=lambda d: d.prefix)
-    logger.info("ZIP extrait : %d demande(s) détectée(s)", len(result))
+    logger.info("ZIP extrait : %d demande(s) detectee(s)", len(result))
     return result
 
 
@@ -265,24 +275,25 @@ def process_demande(
         except Exception as e:
             logger.error("Erreur extraction colonnes prefix %s: %s", dossier.prefix, e)
 
-    # --- Etape 2 : Transformation en données métier ---
+    # --- Etape 2 : Transformation en donnees metier ---
     try:
         computed = compute_metadata(
             raw,
             datasets=result.datasets,
             courrier_bytes=dossier.courrier_pdf,
             table_data=table_data,
+            prefix=dossier.prefix,
         )
         result.computed_metadata = computed
     except Exception as e:
         logger.error("Erreur transformation metadata prefix %s: %s", dossier.prefix, e)
         computed = ComputedMetadata()
 
-    # Générer l'Excel métadonnées avec les données métier
+    # Generer l'Excel metadonnees avec les donnees metier
     try:
         result.metadata_excel = _build_metadata_excel_computed(computed)
     except Exception as e:
-        logger.error("Erreur génération métadonnées Excel prefix %s: %s", dossier.prefix, e)
+        logger.error("Erreur generation metadonnees Excel prefix %s: %s", dossier.prefix, e)
 
     logger.info(
         "Demande %s : N°%s, %d tableaux, %d lignes",
@@ -310,7 +321,7 @@ def process_zip(
     dossiers = extract_zip_to_dossiers(zip_bytes)
 
     if not dossiers:
-        logger.warning("Aucune demande trouvée dans le ZIP.")
+        logger.warning("Aucune demande trouvee dans le ZIP.")
         return []
 
     results = []
@@ -332,6 +343,84 @@ def process_zip(
         on_progress(len(dossiers), len(dossiers), "")
 
     return results
+
+
+def _build_recapitulatif_excel(results: list[DemandeResult]) -> bytes:
+    """Génère un Excel récapitulatif avec une ligne par demande."""
+    wb = Workbook()
+    wb.remove(wb.active)
+    ws = wb.create_sheet(title="Recapitulatif")
+
+    # Collecter les rows de chaque demande
+    all_rows = []
+    all_red_keys: list[set[str]] = []
+    for r in results:
+        meta_rows = computed_metadata_to_rows(r.computed_metadata)
+        all_rows.append(meta_rows)
+        all_red_keys.append(computed_metadata_red_keys(r.computed_metadata))
+
+    if not all_rows:
+        buf = io.BytesIO()
+        wb.save(buf)
+        buf.seek(0)
+        return buf.getvalue()
+
+    # Headers (ligne 1)
+    headers = [key for key, _ in all_rows[0]]
+    for col_idx, header in enumerate(headers, start=1):
+        cell = ws.cell(row=1, column=col_idx, value=header)
+        cell.fill = HEADER_FILL
+        cell.font = HEADER_FONT
+        cell.alignment = HEADER_ALIGNMENT
+        cell.border = THIN_BORDER
+
+    # Données (une ligne par demande)
+    from .excel_writer import META_VAL_RED_FONT, META_VAL_RED_FILL
+    for row_num, (meta_rows, red_keys) in enumerate(zip(all_rows, all_red_keys), start=2):
+        for col_idx, (key, value) in enumerate(meta_rows, start=1):
+            if value is None or value == "":
+                cell = ws.cell(row=row_num, column=col_idx, value=None)
+            else:
+                cell = ws.cell(row=row_num, column=col_idx, value=value)
+                if isinstance(value, float):
+                    cell.number_format = EURO_FORMAT
+            if key in red_keys:
+                cell.font = META_VAL_RED_FONT
+                cell.fill = META_VAL_RED_FILL
+            else:
+                cell.font = META_VAL_FONT
+            # Active wrap_text uniquement si la valeur contient un retour a la ligne
+            # (adresses multi-lignes pour numeros impairs). Les autres cellules
+            # conservent l'alignement standard inchange.
+            if isinstance(value, str) and "\n" in value:
+                from openpyxl.styles import Alignment
+                cell.alignment = Alignment(vertical="center", wrap_text=True)
+            else:
+                cell.alignment = CELL_ALIGNMENT
+            cell.border = THIN_BORDER
+
+    # Auto-ajustement largeur
+    for col_idx, header in enumerate(headers, start=1):
+        col_letter = get_column_letter(col_idx)
+        max_len = len(str(header))
+        for meta_rows in all_rows[:50]:
+            _, val = meta_rows[col_idx - 1]
+            if val is not None and val != "":
+                max_len = max(max_len, len(str(val)))
+        ws.column_dimensions[col_letter].width = min(max_len + 4, 50)
+
+    ws.freeze_panes = "A2"
+
+    # Auto-filtre
+    if headers:
+        last_col = get_column_letter(len(headers))
+        last_row = 1 + len(all_rows)
+        ws.auto_filter.ref = f"A1:{last_col}{last_row}"
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return buf.getvalue()
 
 
 def build_output_zip(results: list[DemandeResult]) -> bytes:
@@ -369,6 +458,11 @@ def build_output_zip(results: list[DemandeResult]) -> bytes:
                     f"{folder}/{result.prefix}_Métadonnées.xlsx",
                     result.metadata_excel,
                 )
+
+        # Récapitulatif global à la racine du ZIP
+        if len(results) > 0:
+            recap_bytes = _build_recapitulatif_excel(results)
+            zf.writestr("Recapitulatif_Metadonnees.xlsx", recap_bytes)
 
     buf.seek(0)
     return buf.getvalue()

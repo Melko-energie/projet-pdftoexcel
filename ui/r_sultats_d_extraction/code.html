@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-error-container": "#93000a",
+                    "primary-container": "#004b87",
+                    "on-error": "#ffffff",
+                    "on-tertiary-fixed": "#002204",
+                    "inverse-surface": "#2e3132",
+                    "on-tertiary-fixed-variant": "#005312",
+                    "inverse-primary": "#a3c9ff",
+                    "on-surface": "#191c1d",
+                    "tertiary-fixed": "#a3f69c",
+                    "surface-bright": "#f8f9fa",
+                    "on-primary": "#ffffff",
+                    "primary-fixed-dim": "#a3c9ff",
+                    "secondary-fixed": "#d5e4f5",
+                    "on-primary-fixed-variant": "#004882",
+                    "primary": "#003461",
+                    "secondary": "#51606e",
+                    "primary-fixed": "#d3e4ff",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-tint": "#27609d",
+                    "surface-container-high": "#e7e8e9",
+                    "on-background": "#191c1d",
+                    "on-secondary-fixed-variant": "#3a4856",
+                    "on-secondary-fixed": "#0e1d29",
+                    "on-secondary": "#ffffff",
+                    "tertiary": "#003c0a",
+                    "tertiary-fixed-dim": "#88d982",
+                    "on-primary-container": "#8abcff",
+                    "inverse-on-surface": "#f0f1f2",
+                    "tertiary-container": "#005613",
+                    "on-tertiary-container": "#7acb76",
+                    "surface-variant": "#e1e3e4",
+                    "on-primary-fixed": "#001c38",
+                    "secondary-fixed-dim": "#b9c8d8",
+                    "outline": "#727781",
+                    "surface": "#f8f9fa",
+                    "on-tertiary": "#ffffff",
+                    "outline-variant": "#c2c6d1",
+                    "on-surface-variant": "#424750",
+                    "error-container": "#ffdad6",
+                    "on-secondary-container": "#556472",
+                    "secondary-container": "#d2e1f2",
+                    "surface-container": "#edeeef",
+                    "surface-dim": "#d9dadb",
+                    "surface-container-low": "#f3f4f5",
+                    "background": "#f8f9fa",
+                    "surface-container-highest": "#e1e3e4",
+                    "error": "#ba1a1a"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        }
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3 { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface min-h-screen flex">
+<!-- Sidebar / NavigationDrawer -->
+<aside class="fixed left-0 top-0 h-full z-40 flex flex-col p-4 gap-2 bg-[#f3f4f5] dark:bg-slate-900 w-72 transition-all duration-300 ease-out shadow-xl shadow-slate-900/5">
+<div class="px-4 py-6">
+<span class="text-lg font-bold text-[#003461] dark:text-blue-400 font-headline">Precision Editorial</span>
+</div>
+<nav class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-3 text-[#424750] dark:text-slate-400 hover:bg-[#e7e8e9] dark:hover:bg-slate-700 transition-colors rounded-lg font-medium font-label" href="#">
+<span class="material-symbols-outlined" data-icon="add_circle">add_circle</span>
+                Nouveau courrier
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 bg-[#ffffff] dark:bg-slate-800 text-[#003461] dark:text-blue-300 rounded-lg shadow-sm font-bold font-label" href="#">
+<span class="material-symbols-outlined" data-icon="table_chart">table_chart</span>
+                Extractions
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#424750] dark:text-slate-400 hover:bg-[#e7e8e9] dark:hover:bg-slate-700 transition-colors rounded-lg font-medium font-label" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+                Paramètres
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#424750] dark:text-slate-400 hover:bg-[#e7e8e9] dark:hover:bg-slate-700 transition-colors rounded-lg font-medium font-label" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+                Archives
+            </a>
+</nav>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 ml-72 min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center w-full px-8 py-4 bg-[#f8f9fa] dark:bg-slate-950 sticky top-0 z-30">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-[#003461] dark:text-blue-400" data-icon="menu">menu</span>
+<h1 class="text-xl font-bold tracking-tight text-[#191c1d] dark:text-slate-100 font-headline">Extractions validées</h1>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-[#e7e8e9] dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+</button>
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold overflow-hidden border-2 border-surface-container-high">
+<img alt="User profile" class="w-full h-full object-cover" data-alt="professional male portrait with corporate attire and friendly expression against a clean studio background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBYu17Jwua2qpF0ibiZuvShX4gfi7v1e_cNfsoUkxpQHk4xvPoPMTnLFEaQ6wKcXBQXARrn459fCDdoMGxM6FUdFIVBlDbWBi0Ft9wvsxJD2yurO4zQtOgT0JBbZ2qESWnZ7vRHlnjAMO74e8sUXgaeYnTH2CHmqrMoquLRR3VvUtCve1Nba9U5wkw7eSo255JFmIbNklhsG4XqoEff7K0wbXvLVmPQxFyWZCnBqQygknlGDu_6lG3cTv7OhbiwTBpY-G5WNp2ZRYX8"/>
+</div>
+</div>
+</header>
+<!-- Content Body -->
+<div class="p-8 max-w-7xl mx-auto w-full space-y-8 flex-1">
+<!-- Metrics Section: Bento Style -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="bg-surface-container-lowest p-8 rounded-xl shadow-sm border border-outline-variant/10 hover:bg-surface-bright transition-colors group">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform" data-icon="description">description</span>
+<span class="text-xs font-bold tracking-widest text-outline uppercase font-label">Total</span>
+</div>
+<div class="text-4xl font-extrabold text-on-surface font-body mb-1">12</div>
+<div class="text-sm font-medium text-on-surface-variant font-label">Demandes traitées</div>
+</div>
+<div class="bg-surface-container-lowest p-8 rounded-xl shadow-sm border border-outline-variant/10 hover:bg-surface-bright transition-colors group">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-tertiary-container group-hover:scale-110 transition-transform" data-icon="data_table">data_table</span>
+<span class="text-xs font-bold tracking-widest text-outline uppercase font-label">Structuré</span>
+</div>
+<div class="text-4xl font-extrabold text-on-surface font-body mb-1">8</div>
+<div class="text-sm font-medium text-on-surface-variant font-label">Avec tableaux</div>
+</div>
+<div class="bg-surface-container-lowest p-8 rounded-xl shadow-sm border border-outline-variant/10 hover:bg-surface-bright transition-colors group">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-secondary group-hover:scale-110 transition-transform" data-icon="subject">subject</span>
+<span class="text-xs font-bold tracking-widest text-outline uppercase font-label">Narratif</span>
+</div>
+<div class="text-4xl font-extrabold text-on-surface font-body mb-1">4</div>
+<div class="text-sm font-medium text-on-surface-variant font-label">Sans tableau</div>
+</div>
+</section>
+<!-- Table Summary Section -->
+<section class="bg-surface-container-lowest rounded-2xl overflow-hidden border border-outline-variant/5 shadow-xl shadow-slate-900/[0.02]">
+<div class="px-8 py-6 flex justify-between items-center border-b border-surface-container-low">
+<h2 class="text-lg font-bold text-on-surface font-headline">Récapitulatif des extractions</h2>
+<div class="flex gap-2">
+<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-primary-container/10 text-primary uppercase tracking-tighter">PDF Batch v2.4</span>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low/50">
+<th class="px-8 py-4 text-xs font-bold text-outline uppercase tracking-wider font-label">N°</th>
+<th class="px-8 py-4 text-xs font-bold text-outline uppercase tracking-wider font-label">Libellé du document</th>
+<th class="px-8 py-4 text-xs font-bold text-outline uppercase tracking-wider font-label text-center">Statut</th>
+<th class="px-8 py-4 text-xs font-bold text-outline uppercase tracking-wider font-label text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-low">
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="px-8 py-5 text-sm font-medium text-on-surface-variant">001</td>
+<td class="px-8 py-5">
+<div class="text-sm font-semibold text-on-surface font-body">Degrevement TFPB 2024 - Paris 08</div>
+<div class="text-[11px] text-outline">Date: 12 Oct 2023 • 1.2MB</div>
+</td>
+<td class="px-8 py-5 text-center">
+<span class="px-3 py-1 rounded-full text-[11px] font-bold bg-tertiary-fixed text-on-tertiary-fixed-variant uppercase tracking-wide">Annexe</span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="text-primary hover:bg-primary/5 p-2 rounded-lg transition-colors">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="px-8 py-5 text-sm font-medium text-on-surface-variant">002</td>
+<td class="px-8 py-5">
+<div class="text-sm font-semibold text-on-surface font-body">Notification de redressement - Lyon</div>
+<div class="text-[11px] text-outline">Date: 11 Oct 2023 • 0.8MB</div>
+</td>
+<td class="px-8 py-5 text-center">
+<span class="px-3 py-1 rounded-full text-[11px] font-bold bg-secondary-container text-on-secondary-container uppercase tracking-wide">Info seule</span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="text-primary hover:bg-primary/5 p-2 rounded-lg transition-colors">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="px-8 py-5 text-sm font-medium text-on-surface-variant">003</td>
+<td class="px-8 py-5">
+<div class="text-sm font-semibold text-on-surface font-body">Avis d'imposition CFE 2023</div>
+<div class="text-[11px] text-outline">Date: 10 Oct 2023 • 2.1MB</div>
+</td>
+<td class="px-8 py-5 text-center">
+<span class="px-3 py-1 rounded-full text-[11px] font-bold bg-tertiary-fixed text-on-tertiary-fixed-variant uppercase tracking-wide">Annexe</span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="text-primary hover:bg-primary/5 p-2 rounded-lg transition-colors">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="px-8 py-5 text-sm font-medium text-on-surface-variant">004</td>
+<td class="px-8 py-5">
+<div class="text-sm font-semibold text-on-surface font-body">Correspondance Administrative v4</div>
+<div class="text-[11px] text-outline">Date: 09 Oct 2023 • 0.5MB</div>
+</td>
+<td class="px-8 py-5 text-center">
+<span class="px-3 py-1 rounded-full text-[11px] font-bold bg-secondary-container text-on-secondary-container uppercase tracking-wide">Info seule</span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="text-primary hover:bg-primary/5 p-2 rounded-lg transition-colors">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="px-8 py-6 bg-surface-container-low/20 flex justify-between items-center border-t border-surface-container-low">
+<span class="text-sm text-outline font-label">Affichage de 1 à 4 sur 12 extractions</span>
+<div class="flex gap-4">
+<button class="text-primary font-bold text-sm flex items-center gap-2 hover:translate-x-1 transition-transform">
+                            Voir tout l'historique
+                            <span class="material-symbols-outlined text-sm" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Actions Section -->
+<section class="flex flex-col md:flex-row items-center justify-between gap-6 pt-6">
+<div class="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+<button class="flex items-center justify-center gap-3 px-8 py-4 bg-primary text-on-primary rounded-xl font-bold transition-all hover:shadow-lg hover:shadow-primary/20 active:scale-95 group">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+                        Télécharger le dossier structuré (.zip)
+                    </button>
+<button class="flex items-center justify-center gap-3 px-8 py-4 bg-surface-container-high text-on-surface rounded-xl font-bold transition-all hover:bg-surface-dim active:scale-95">
+<span class="material-symbols-outlined" data-icon="refresh">refresh</span>
+                        Nouveau courrier
+                    </button>
+</div>
+<div class="flex items-center gap-2 text-outline-variant">
+<span class="w-2 h-2 rounded-full bg-tertiary-container animate-pulse"></span>
+<span class="text-xs font-bold uppercase tracking-widest font-label">Système opérationnel</span>
+</div>
+</section>
+</div>
+<!-- Footer -->
+<footer class="mt-auto py-8 px-8 flex flex-col items-center gap-4 text-outline font-label">
+<div class="w-full h-px bg-surface-container-high max-w-7xl"></div>
+<div class="flex flex-col md:flex-row justify-between w-full max-w-7xl items-center gap-6">
+<p class="text-sm">© 2024 Precision Editorial. Tous droits réservés.</p>
+<div class="flex items-center gap-6">
+<a class="flex items-center gap-2 text-sm font-semibold hover:text-primary transition-colors" href="https://github.com">
+<svg aria-hidden="true" class="w-5 h-5 fill-current" viewbox="0 0 24 24"><path clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" fill-rule="evenodd"></path></svg>
+                        GitHub du projet
+                    </a>
+<div class="flex gap-4">
+<a class="text-sm hover:underline decoration-primary underline-offset-4" href="#">Confidentialité</a>
+<a class="text-sm hover:underline decoration-primary underline-offset-4" href="#">Conditions</a>
+</div>
+</div>
+</div>
+</footer>
+<!-- Mobile BottomNavBar (Hidden on desktop) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-safe bg-[#f8f9fa]/80 backdrop-blur-md shadow-[0_-4px_12px_rgba(0,0,0,0.05)] border-t border-[#c2c6d1]/20">
+<a class="flex flex-col items-center justify-center text-[#727781] hover:text-[#003461]" href="#">
+<span class="material-symbols-outlined" data-icon="play_arrow">play_arrow</span>
+<span class="text-[10px] font-bold uppercase tracking-wider font-label mt-1">Lancer</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#003461] font-bold bg-[#003461]/5 rounded-xl px-4 py-1" href="#">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+<span class="text-[10px] font-bold uppercase tracking-wider font-label mt-1">Export</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#727781] hover:text-[#003461]" href="#">
+<span class="material-symbols-outlined" data-icon="refresh">refresh</span>
+<span class="text-[10px] font-bold uppercase tracking-wider font-label mt-1">Nouveau</span>
+</a>
+</nav>
+</main>
+</body></html>

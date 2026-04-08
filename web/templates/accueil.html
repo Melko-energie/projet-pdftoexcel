@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Accueil — PDF Table Extractor{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-12">
+  <!-- Header -->
+  <section class="space-y-2">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/5 text-primary font-label text-xs font-bold uppercase tracking-widest">
+      <span class="relative flex h-2 w-2">
+        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+        <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+      </span>
+      B2B Fiscal Tool
+    </div>
+    <h1 class="text-4xl md:text-5xl font-extrabold text-on-surface tracking-tight font-headline">📄 PDF Table Extractor</h1>
+    <p class="text-on-surface-variant text-lg max-w-2xl font-body">Automatisez l'extraction de vos dossiers de dégrèvement TFPB. Glissez vos documents pour commencer.</p>
+  </section>
+
+  <!-- Quick access to user guide -->
+  <a href="/guide" target="_blank" rel="noopener" class="flex items-center justify-between p-5 bg-primary/5 hover:bg-primary/10 rounded-2xl transition-all group">
+    <div class="flex items-center gap-4">
+      <div class="w-12 h-12 rounded-xl bg-primary text-on-primary flex items-center justify-center shadow-md shadow-primary/20 group-hover:scale-105 transition-transform">
+        <span class="material-symbols-outlined">menu_book</span>
+      </div>
+      <div>
+        <h3 class="font-headline font-bold text-on-surface">Première utilisation ?</h3>
+        <p class="text-xs text-on-surface-variant font-label">Consultez le guide d'utilisation Melko (PDF)</p>
+      </div>
+    </div>
+    <span class="material-symbols-outlined text-primary group-hover:translate-x-1 transition-transform">arrow_forward</span>
+  </a>
+
+  <!-- Instructional Expander -->
+  <div class="group bg-surface-container-low rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-slate-200/50">
+    <details class="p-6 cursor-pointer select-none">
+      <summary class="flex items-center justify-between list-none">
+        <div class="flex items-center gap-4">
+          <div class="w-10 h-10 rounded-xl bg-surface-container-lowest flex items-center justify-center text-primary shadow-sm">
+            <span class="material-symbols-outlined">help_outline</span>
+          </div>
+          <div>
+            <h3 class="font-headline font-bold text-on-surface">Comment utiliser cet outil ?</h3>
+            <p class="text-xs text-on-surface-variant font-label">Structure ZIP &amp; convention de nommage</p>
+          </div>
+        </div>
+        <span class="material-symbols-outlined text-outline transition-transform group-open:rotate-180">expand_more</span>
+      </summary>
+      <div class="mt-6 pt-6 border-t border-outline-variant/20 grid md:grid-cols-2 gap-8 text-sm text-on-surface-variant leading-relaxed">
+        <div class="space-y-3">
+          <h4 class="font-bold text-on-surface flex items-center gap-2">
+            <span class="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px]">1</span>
+            Structure du ZIP
+          </h4>
+          <p>Votre archive doit contenir deux répertoires racines :</p>
+          <ul class="list-disc pl-5 space-y-1">
+            <li><code class="bg-surface-container-high px-1 rounded">mails/</code> — courriers PDF</li>
+            <li><code class="bg-surface-container-high px-1 rounded">proof/</code> — AR &amp; preuves de dépôt</li>
+          </ul>
+        </div>
+        <div class="space-y-3">
+          <h4 class="font-bold text-on-surface flex items-center gap-2">
+            <span class="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px]">2</span>
+            Convention de nommage
+          </h4>
+          <p>Chaque fichier doit commencer par son préfixe numérique (ex : <span class="font-mono text-primary">339-Courrier_TFPB.pdf</span>). Le préfixe assure le regroupement automatique.</p>
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- Upload Zone -->
+  <form id="upload-form" action="/upload" method="post" enctype="multipart/form-data" class="relative">
+    <div class="absolute -inset-1 bg-gradient-to-r from-primary/10 to-primary-container/10 rounded-[2.5rem] blur opacity-30 transition duration-1000 pointer-events-none"></div>
+    <div id="drop-zone" class="relative block bg-surface-container-lowest border-2 border-dashed border-outline-variant/30 rounded-[2rem] p-12 md:p-20 text-center space-y-8 hover:border-primary/40 transition-colors duration-300 cursor-pointer">
+      <input type="file" id="file-input" name="files" multiple accept=".pdf,.zip" class="hidden"/>
+      <div class="w-24 h-24 bg-surface-container-low rounded-[2rem] flex items-center justify-center mx-auto shadow-sm pointer-events-none">
+        <span class="material-symbols-outlined text-5xl text-primary">cloud_upload</span>
+      </div>
+      <div class="space-y-3 pointer-events-none">
+        <h2 class="text-2xl font-bold text-on-surface font-headline">Déposez vos courriers ici</h2>
+        <p class="text-on-surface-variant max-w-sm mx-auto font-body">Glissez-déposez votre archive ZIP ou cliquez pour parcourir vos fichiers.</p>
+      </div>
+      <div class="flex items-center justify-center">
+        <span class="px-8 py-3 bg-primary text-on-primary rounded-xl font-bold font-label inline-flex items-center gap-2 shadow-lg shadow-primary/20 pointer-events-none">
+          <span class="material-symbols-outlined">upload_file</span>
+          Parcourir les fichiers
+        </span>
+      </div>
+      <p class="text-[10px] uppercase tracking-widest text-outline font-bold pointer-events-none">Formats acceptés : .ZIP, .PDF</p>
+    </div>
+    <div id="selected-files" class="mt-4 hidden space-y-2"></div>
+    <button type="submit" id="submit-btn" disabled
+            class="mt-6 w-full py-5 bg-gradient-primary text-on-primary rounded-xl font-bold text-lg flex items-center justify-center gap-3 active:scale-95 transition-all shadow-lg shadow-primary/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:saturate-50">
+      <span class="material-symbols-outlined">rocket_launch</span>
+      Lancer l'extraction
+    </button>
+    <p id="submit-hint" class="text-center text-xs text-outline mt-3 font-label">Déposez au moins un fichier pour activer le bouton</p>
+  </form>
+
+  <!-- Info cards -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="p-6 bg-surface-container-low rounded-2xl space-y-4">
+      <span class="material-symbols-outlined text-tertiary">verified</span>
+      <h4 class="font-bold text-on-surface">Extraction Auditée</h4>
+      <p class="text-xs text-on-surface-variant leading-relaxed">Détection automatique des tableaux fiscaux complexes, avec vérification des totaux TTC.</p>
+    </div>
+    <div class="p-6 bg-surface-container-low rounded-2xl space-y-4">
+      <span class="material-symbols-outlined text-primary">security</span>
+      <h4 class="font-bold text-on-surface">Traitement Local</h4>
+      <p class="text-xs text-on-surface-variant leading-relaxed">Vos documents sont traités sur le serveur et ne sortent pas de l'infrastructure.</p>
+    </div>
+    <div class="p-6 bg-surface-container-low rounded-2xl space-y-4">
+      <span class="material-symbols-outlined text-secondary">speed</span>
+      <h4 class="font-bold text-on-surface">Batch ZIP</h4>
+      <p class="text-xs text-on-surface-variant leading-relaxed">Traitez plusieurs demandes en une seule passe via la structure mails/ + proof/.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/accueil.js"></script>
+{% endblock %}

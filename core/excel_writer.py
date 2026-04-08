@@ -39,6 +39,8 @@ DATE_FORMAT = 'DD/MM/YYYY'
 META_KEY_FILL = PatternFill(start_color="D6E4F0", end_color="D6E4F0", fill_type="solid")
 META_KEY_FONT = Font(name="Calibri", size=11, bold=True)
 META_VAL_FONT = Font(name="Calibri", size=11)
+META_VAL_RED_FONT = Font(name="Calibri", size=11, color="C00000", bold=True)
+META_VAL_RED_FILL = PatternFill(start_color="FCE4E4", end_color="FCE4E4", fill_type="solid")
 
 
 def _sanitize_sheet_name(name: str) -> str:
@@ -131,41 +133,61 @@ def write_dataset_to_sheet(ws, dataset: Dataset) -> None:
         ws.auto_filter.ref = f"A1:{last_col}{current_row - 1}"
 
 
-def write_metadata_sheet(ws, metadata_rows: list[tuple[str, object]]) -> None:
+def write_metadata_sheet(
+    ws,
+    metadata_rows: list[tuple[str, object]],
+    red_keys: set[str] | None = None,
+) -> None:
     """Écrit une feuille de métadonnées en disposition horizontale.
 
-    Les noms des champs sont en en-têtes sur la ligne 1,
-    les valeurs correspondantes sur la ligne 2.
+    Ligne 1 : noms des champs (headers).
+    Ligne 2 : valeurs correspondantes.
 
     Args:
         ws: Feuille openpyxl.
         metadata_rows: Liste de tuples (clé, valeur). Les valeurs float
             reçoivent le format euro.
+        red_keys: Ensemble de clés dont la cellule valeur doit être colorée en rouge
+            (verifications échouées).
     """
-    # Ligne 1 : noms des champs en en-têtes horizontaux
-    for col_idx, (key, _) in enumerate(metadata_rows, start=1):
+    red_keys = red_keys or set()
+    # Ligne 1 : noms des champs (headers horizontaux)
+    for col_idx, (key, _value) in enumerate(metadata_rows, start=1):
         cell = ws.cell(row=1, column=col_idx, value=key)
         cell.fill = HEADER_FILL
         cell.font = HEADER_FONT
         cell.alignment = HEADER_ALIGNMENT
         cell.border = THIN_BORDER
 
-    # Ligne 2 : valeurs correspondantes
-    for col_idx, (_, value) in enumerate(metadata_rows, start=1):
-        display_value = value if value is not None else ""
-        val_cell = ws.cell(row=2, column=col_idx, value=display_value)
-        val_cell.font = META_VAL_FONT
-        val_cell.alignment = CELL_ALIGNMENT
+    # Ligne 2 : valeurs
+    for col_idx, (key, value) in enumerate(metadata_rows, start=1):
+        # Si vide ou None, ecrire une cellule vide (pas de 0, pas de format euro)
+        if value is None or value == "":
+            val_cell = ws.cell(row=2, column=col_idx, value=None)
+        else:
+            val_cell = ws.cell(row=2, column=col_idx, value=value)
+            if isinstance(value, float):
+                val_cell.number_format = EURO_FORMAT
+        if key in red_keys:
+            val_cell.font = META_VAL_RED_FONT
+            val_cell.fill = META_VAL_RED_FILL
+        else:
+            val_cell.font = META_VAL_FONT
+        # Active wrap_text uniquement si la valeur contient un retour a la ligne,
+        # pour que les adresses multi-lignes (numeros impairs) s'affichent correctement.
+        # Les autres cellules conservent l'alignement standard inchange.
+        if isinstance(value, str) and "\n" in value:
+            val_cell.alignment = Alignment(vertical="center", wrap_text=True)
+        else:
+            val_cell.alignment = CELL_ALIGNMENT
         val_cell.border = THIN_BORDER
 
-        if isinstance(value, float):
-            val_cell.number_format = EURO_FORMAT
-
-    # Auto-ajustement largeur des colonnes
+    # Auto-ajustement largeur par colonne
     for col_idx, (key, value) in enumerate(metadata_rows, start=1):
-        width = max(len(str(key)), len(str(value or ""))) + 4
-        width = min(width, 50)
-        ws.column_dimensions[get_column_letter(col_idx)].width = width
+        col_letter = get_column_letter(col_idx)
+        header_len = len(str(key))
+        value_len = len(str(value)) if value is not None else 0
+        ws.column_dimensions[col_letter].width = min(max(header_len, value_len) + 4, 50)
 
     ws.freeze_panes = "B1"
 
@@ -186,7 +208,7 @@ def write_excel(
         Le chemin du fichier créé.
     """
     if not datasets and not metadata_rows:
-        logger.warning("Aucun dataset à écrire.")
+        logger.warning("Aucun dataset a ecrire.")
         return output_path
 
     output_path = Path(output_path)
@@ -200,19 +222,19 @@ def write_excel(
     if metadata_rows:
         ws_meta = wb.create_sheet(title="Métadonnées")
         write_metadata_sheet(ws_meta, metadata_rows)
-        logger.info("Écriture de la feuille 'Métadonnées' : %d champs", len(metadata_rows))
+        logger.info("Ecriture de la feuille Metadonnees : %d champs", len(metadata_rows))
 
     for dataset in datasets:
         sheet_name = _sanitize_sheet_name(dataset.name)
         ws = wb.create_sheet(title=sheet_name)
 
         logger.info(
-            "Écriture de la feuille '%s' : %d lignes + %d totaux",
+            "Ecriture de la feuille '%s' : %d lignes + %d totaux",
             sheet_name, len(dataset.data_rows), len(dataset.total_rows),
         )
 
         write_dataset_to_sheet(ws, dataset)
 
     wb.save(output_path)
-    logger.info("Fichier Excel créé : %s", output_path)
+    logger.info("Fichier Excel cree : %s", output_path)
     return output_path

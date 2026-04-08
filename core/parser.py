@@ -1,6 +1,7 @@
 """Extraction, nettoyage et consolidation des données tabulaires."""
 
 import logging
+import unicodedata
 from dataclasses import dataclass, field
 
 from .scanner import TableInfo
@@ -114,13 +115,23 @@ def clean_value(value: str, col_type: str):
         return cleaned
 
 
+def _strip_accents(text: str) -> str:
+    """Supprime les accents d'un texte."""
+    return "".join(c for c in unicodedata.normalize("NFD", text) if unicodedata.category(c) != "Mn")
+
+
 def _is_annexe_fiscale(headers: list[str]) -> bool:
-    """Détecte si un tableau est une annexe fiscale (contient programme + référence + avis)."""
-    normalized = [normalize_header(h) for h in headers]
-    joined = " ".join(normalized)
-    has_programme = "programme" in joined
-    has_reference_avis = ("référence" in joined or "reference" in joined) and "avis" in joined
-    return has_programme and has_reference_avis
+    """Detecte si un tableau est une annexe fiscale (TABLEAU RECAPITULATIF TFPB).
+
+    Un tableau est une Annexe s'il contient au moins 3 marqueurs parmi :
+    programme, operation, commune, installateur, degrevement, davis, montantht.
+    """
+    joined = " ".join(h.lower().replace("\n", " ") if h else "" for h in headers)
+    normalized = _strip_accents(joined).replace(" ", "").replace("'", "").replace("\u2019", "")
+
+    markers = ["programme", "operation", "commune", "installateur", "degrevement", "davis", "montantht"]
+    matches = sum(1 for m in markers if m in normalized)
+    return matches >= 3
 
 
 def process_tables(tables: list[TableInfo]) -> list[Dataset]:
@@ -132,7 +143,7 @@ def process_tables(tables: list[TableInfo]) -> list[Dataset]:
     - Sépare les lignes de total
     """
     if not tables:
-        logger.warning("Aucun tableau à traiter.")
+        logger.warning("Aucun tableau a traiter.")
         return []
 
     groups = group_tables(tables)

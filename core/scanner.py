@@ -54,7 +54,7 @@ def scan_pdf(pdf_path: Path, min_cols: int = 8, min_rows: int = 1) -> ScanResult
 
     with pdfplumber.open(pdf_path) as pdf:
         result.total_pages = len(pdf.pages)
-        logger.info("PDF : %d page(s) détectée(s)", result.total_pages)
+        logger.info("PDF : %d page(s) detectee(s)", result.total_pages)
 
         for page in pdf.pages:
             page_num = page.page_number
@@ -81,6 +81,16 @@ def scan_pdf(pdf_path: Path, min_cols: int = 8, min_rows: int = 1) -> ScanResult
                 ]
                 rows = table[1:]
                 col_count = len(headers)
+
+                # Filtrage : faux tableaux (en-tete courrier, avis d'imposition)
+                first_header = (str(raw_headers[0]).strip().lower() if raw_headers and raw_headers[0] else "")
+                bad_words = ["melko", "energie", "pour le compte", "taxes fonci", "cotisation", "debiteur", "taux 20"]
+                if any(w in first_header for w in bad_words):
+                    logger.debug(
+                        "Page %d, tableau %d : ignore (faux tableau)",
+                        page_num, table_idx + 1,
+                    )
+                    continue
 
                 # Filtrage : min colonnes
                 if col_count < min_cols:

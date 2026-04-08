@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html class="light" lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>{% block title %}PDF Table Extractor{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "on-error-container": "#93000a",
+            "primary-container": "#004b87",
+            "on-error": "#ffffff",
+            "inverse-surface": "#2e3132",
+            "on-surface": "#191c1d",
+            "surface-bright": "#f8f9fa",
+            "on-primary": "#ffffff",
+            "primary-fixed": "#d3e4ff",
+            "primary": "#003461",
+            "secondary": "#51606e",
+            "surface-container-lowest": "#ffffff",
+            "surface-tint": "#27609d",
+            "surface-container-high": "#e7e8e9",
+            "on-background": "#191c1d",
+            "on-secondary": "#ffffff",
+            "tertiary": "#003c0a",
+            "on-primary-container": "#8abcff",
+            "tertiary-container": "#005613",
+            "on-tertiary-container": "#7acb76",
+            "tertiary-fixed": "#a3f69c",
+            "on-tertiary-fixed-variant": "#005312",
+            "surface-variant": "#e1e3e4",
+            "secondary-fixed-dim": "#b9c8d8",
+            "outline": "#727781",
+            "surface": "#f8f9fa",
+            "on-tertiary": "#ffffff",
+            "outline-variant": "#c2c6d1",
+            "on-surface-variant": "#424750",
+            "error-container": "#ffdad6",
+            "secondary-container": "#d2e1f2",
+            "on-secondary-container": "#556472",
+            "surface-container": "#edeeef",
+            "surface-dim": "#d9dadb",
+            "surface-container-low": "#f3f4f5",
+            "background": "#f8f9fa",
+            "surface-container-highest": "#e1e3e4",
+            "error": "#ba1a1a"
+          },
+          borderRadius: {
+            DEFAULT: "0.125rem",
+            lg: "0.25rem",
+            xl: "0.5rem",
+            full: "0.75rem"
+          },
+          fontFamily: {
+            headline: ["Manrope"],
+            body: ["Inter"],
+            label: ["Inter"]
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      min-height: max(884px, 100dvh);
+    }
+    h1, h2, h3 { font-family: 'Manrope', sans-serif; }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .bg-gradient-primary {
+      background: linear-gradient(to bottom right, #003461, #004b87);
+    }
+    .ambient-shadow {
+      box-shadow: 0 8px 32px rgba(25, 28, 29, 0.05);
+    }
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+    .loading-shimmer {
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      animation: shimmer 2s infinite;
+    }
+  </style>
+  {% block head_extra %}{% endblock %}
+</head>
+<body class="bg-surface text-on-surface overflow-x-hidden">
+
+<!-- Sidebar -->
+<aside class="hidden md:flex fixed left-0 top-0 h-screen w-72 flex-col p-4 gap-2 bg-surface-container-low z-40 transition-all duration-300 ease-out shadow-xl shadow-slate-900/5">
+  <div class="px-4 py-6">
+    <h1 class="text-lg font-bold text-primary font-headline tracking-tight">PDF Table Extractor</h1>
+    <p class="text-xs text-outline font-label mt-1">Melko Energie</p>
+  </div>
+  <nav class="flex flex-col gap-1">
+    <a href="/" class="flex items-center gap-3 px-4 py-3 {% if active_page == 'accueil' %}bg-surface-container-lowest text-primary shadow-sm font-medium{% else %}text-on-surface-variant hover:bg-surface-container-high{% endif %} rounded-lg transition-all duration-150">
+      <span class="material-symbols-outlined">add_circle</span>
+      <span class="font-label text-sm">Nouveau courrier</span>
+    </a>
+    <a href="#" class="flex items-center gap-3 px-4 py-3 {% if active_page == 'extractions' %}bg-surface-container-lowest text-primary shadow-sm font-medium{% else %}text-on-surface-variant hover:bg-surface-container-high{% endif %} rounded-lg transition-all duration-150">
+      <span class="material-symbols-outlined">table_chart</span>
+      <span class="font-label text-sm">Extractions</span>
+    </a>
+    <a href="/guide" target="_blank" rel="noopener" class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all duration-150">
+      <span class="material-symbols-outlined">menu_book</span>
+      <span class="font-label text-sm">Guide d'utilisation</span>
+      <span class="material-symbols-outlined text-sm ml-auto text-outline">open_in_new</span>
+    </a>
+  </nav>
+  <div class="mt-auto p-4 bg-surface-container-lowest/50 rounded-xl">
+    <h3 class="text-xs font-bold uppercase tracking-widest text-outline mb-2 font-label">Version</h3>
+    <p class="text-xs text-on-surface-variant font-label">PDF Batch v2.4</p>
+    <a href="/guide" target="_blank" rel="noopener" class="mt-3 flex items-center gap-2 text-xs text-primary font-label font-bold hover:underline">
+      <span class="material-symbols-outlined text-sm">download</span>
+      Télécharger le guide PDF
+    </a>
+  </div>
+</aside>
+
+<!-- Mobile topbar -->
+<header class="md:hidden sticky top-0 w-full z-50 bg-surface px-6 py-4 flex justify-between items-center">
+  <div class="flex items-center gap-3">
+    <span class="material-symbols-outlined text-primary">menu</span>
+    <span class="text-xl font-bold tracking-tight text-on-surface font-headline">PDF Table Extractor</span>
+  </div>
+</header>
+
+<!-- Main content -->
+<main class="md:ml-72 min-h-screen p-6 md:p-12 lg:p-16">
+  {% block content %}{% endblock %}
+</main>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>
