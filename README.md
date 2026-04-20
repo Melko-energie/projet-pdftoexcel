@@ -10,6 +10,39 @@ L'outil prend en entrée un **ZIP** contenant un ou plusieurs dossiers de demand
 
 > Pour comprendre en détail le contenu des Excel produits, voir **[GUIDE_UTILISATION.md](GUIDE_UTILISATION.md)**.
 
+---
+
+## 🚀 Démarrage rapide — UNE seule commande
+
+Après `git clone`, depuis la racine du projet :
+
+**Windows (PowerShell)**
+```powershell
+.\go.ps1
+```
+
+**Linux / macOS / Git Bash**
+```bash
+bash go.sh
+```
+
+Ça :
+1. crée `.venv` Python à la racine et installe `requirements.txt`,
+2. active le hook git `post-merge` (les futurs `git pull` rejouent l'install tout seuls),
+3. lance l'**UI Streamlit** sur http://localhost:8501.
+
+### Sous-commandes utiles
+| But | PowerShell | Bash |
+|---|---|---|
+| Tout (install + Streamlit) | `.\go.ps1` | `bash go.sh` |
+| Installer seulement | `.\go.ps1 install` | `bash go.sh install` |
+| Streamlit (UI principale) | `.\go.ps1 streamlit` | `bash go.sh streamlit` |
+| FastAPI alternative (:8000) | `.\go.ps1 web` | `bash go.sh web` |
+
+> **Pré-requis** : `python` (3.11+ ; **3.12 recommandé** d'après les notes du projet — Python 3.14 et le Python du Microsoft Store peuvent provoquer des erreurs DLL bloquées par Windows Smart App Control), `git`.
+
+---
+
 ## Installation
 
 ### Prérequis

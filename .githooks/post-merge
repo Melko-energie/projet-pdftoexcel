@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Auto-installation après chaque git pull / git merge.
+ROOT="$(git rev-parse --show-toplevel)"
+echo "[post-merge] Réinstallation des dépendances projet-pdftoexcel…"
+bash "$ROOT/go.sh" install
