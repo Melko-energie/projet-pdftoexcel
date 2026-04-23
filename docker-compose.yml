@@ -1,0 +1,23 @@
+services:
+  streamlit:
+    build: .
+    image: projet-pdftoexcel:latest
+    container_name: pdftoexcel-streamlit
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./jobs:/app/jobs
+    restart: unless-stopped
+
+  fastapi:
+    build: .
+    image: projet-pdftoexcel:latest
+    container_name: pdftoexcel-fastapi
+    command: ["uvicorn", "web.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./jobs:/app/jobs
+    restart: unless-stopped
+    profiles:
+      - fastapi

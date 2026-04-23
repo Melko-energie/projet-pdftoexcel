@@ -43,6 +43,55 @@ bash go.sh
 
 ---
 
+## 🐳 Docker
+
+Pré-requis : [Docker](https://docs.docker.com/get-docker/) (et Docker Compose, inclus dans Docker Desktop).
+
+### Démarrage rapide avec Docker Compose (recommandé)
+
+Depuis la racine du projet :
+
+```bash
+docker compose up --build
+```
+
+L'UI Streamlit est ensuite disponible sur http://localhost:8501.
+
+Pour arrêter :
+```bash
+docker compose down
+```
+
+### Lancer aussi l'API FastAPI (port 8000)
+
+L'API FastAPI est en profil optionnel. Pour la lancer en plus de Streamlit :
+
+```bash
+docker compose --profile fastapi up --build
+```
+
+FastAPI sera alors exposée sur http://localhost:8000.
+
+### Build et run manuels (sans Compose)
+
+```bash
+# Build de l'image
+docker build -t projet-pdftoexcel .
+
+# Lancer l'UI Streamlit (port 8501)
+docker run --rm -p 8501:8501 projet-pdftoexcel
+
+# Lancer l'API FastAPI (port 8000) à la place
+docker run --rm -p 8000:8000 projet-pdftoexcel \
+  uvicorn web.main:app --host 0.0.0.0 --port 8000
+```
+
+### Persistance des fichiers de traitement
+
+Les fichiers d'entrée/sortie en cours de traitement sont stockés dans `/app/jobs` dans le conteneur. Le `docker-compose.yml` monte ce dossier sur `./jobs` sur l'hôte pour que les fichiers survivent aux redémarrages du conteneur.
+
+---
+
 ## Installation
 
 ### Prérequis
